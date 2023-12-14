@@ -14,7 +14,7 @@ def write_bits(bits_arr):
             binary_file.write(bytearray([byte]))
 
 def process_labels(file_name):
-    f = open("file_name")
+    f = open(file_name)
     for line in f:
         # TODO proccess label addresses by simulating instructions
         pass
