@@ -10,15 +10,28 @@ def write_bits(bits_arr):
             byte = byte << 1
             byte = byte | bit_stack[0]
             del bit_stack[0]
-        with open(bin_file_path, "ab") as binary_file:
-            binary_file.write(bytearray([byte]))    # TODO Close binary_file
+        with open(bin_file_name, "ab") as binary_file:
+            binary_file.write(bytearray([byte]))
+
+def process_labels(file_name):
+    f = open("file_name")
+    for line in f:
+        # TODO proccess label addresses by simulating instructions
+        pass
+    f.close()
+
+# I/O Files
+bin_file_name = "func_1.o"
+code_file_name = "func_1.txt"
+f = open(code_file_name)
 
 # OPCODES dictionary
+# TODO opcode dictionary
 opcode = {"addi": [1,1,1], "j": [1101]}
 
-# Open files
-bin_file_path = "func_1.o"
-f = open("func_1.txt")  
+# Register codes dictionary
+# TODO register dictionary
+reg_dict = {}
 
 current_section = 0
 curr_address = 0
@@ -48,7 +61,7 @@ for line in f:
     if current_section == 1:
         # TODO save global variables
         pass
-        #continue       ~ go to next line
+        #continue       ~ go to next line TODO uncomment after implementation
 
     if (line[-1] == ":"):
         # save label address
@@ -60,7 +73,12 @@ for line in f:
     line = re.split("[ ,]+",line)
     if line[0].lower() == "addi":
         # TODO implementation
-        pass
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits([0,0,0,0,0,0,0,1])   # TODO transform immediate value to byte array
+        immediate_length = 8    # TEMPORARY ~ need immediat value byte transformation
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_length
     elif line[0].lower() == "j":
         # TODO implementation
         pass
@@ -161,4 +179,4 @@ for line in f:
         # TODO implementation
         pass
 
-
+write_bits([0,0,0,0,0,0,0,0])   # write unwritten bits still in the stack
