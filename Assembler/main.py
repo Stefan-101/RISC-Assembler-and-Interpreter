@@ -62,6 +62,9 @@ opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1,
           "srai":[0, 0, 1, 0, 0, 0], "bnez":[0, 0, 1, 0, 1, 1, 1], "sub":[0, 0, 1, 0, 1, 1, 0], 
           "fsqrt.d":[0, 0, 1, 0, 1, 0, 1], "fadd.d":[0, 0, 1, 0, 1, 0, 0], "fmv.s.x":[0, 0, 0, 1, 0, 1, 1], 
           "bgt":[0, 0, 0, 1, 0, 1, 0], "fadd.s":[0, 0, 0, 1, 0, 0, 1], "fmul.s":[0, 0, 0, 1, 0, 0, 0]}
+# TODO Instructions to be merged (recalculate huffman encodings)
+# mv -> addi
+# ble -> bge    
 
 
 
@@ -164,7 +167,6 @@ for line in f:
         var_name = line[:line.find(":")]
         var_type = line[line.find("."):].split()[0]
         var_arg = line[line.find(var_type)+len(var_type)+1:]
-        print(var_name, var_type, var_arg)
         
         glb_var[var_name] = curr_address
 
@@ -244,7 +246,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
     elif line[0].lower() == "beqz":
-        # branch if reg is equal to zero
+        # branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         address = search_addr_by_label(line[2], curr_address)
@@ -253,6 +255,7 @@ for line in f:
 
     elif line[0].lower() == "mv":
         # move reg2 to reg1
+        # TODO can be merged with addi ? (mv reg1, reg2 <=> add reg1,reg2,zero)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -270,7 +273,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
     elif line[0].lower() == "fmv.s":
-        # copy fp reg2 in reg1
+        # copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -299,6 +302,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
     elif line[0].lower() == "call":
+        # could be expanded, but instructions from expansion are not implemented (will be hardcoded in the interpreter)
         write_bits(opcode[line[0]])
         func_name = line[1]
         write_bits([1,1,1,1,1,1,1,1])   # DUMMY value
@@ -329,23 +333,63 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
     elif line[0].lower() == "fld":
-        # TODO implementation
-        pass
+        # load 64 bits (???) from mem address and store to reg (fp)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "slli":
-        # TODO implementation
-        pass
+        # logical left shift on reg2 by amount held in immediate and store to reg1
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        value = immediate_to_bits(line[3])
+        write_bits(value)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
+
     elif line[0].lower() == "fsw":
-        # TODO implementation
-        pass
+        # store 32 bit fp to memory address
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "la":
-        # TODO implementation
-        pass
+        # load address in register
+        # TODO can be merged with LI instruction ? (LA reg1, var_name <=> LI reg1, $var_name)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(immediate_to_bits(glb_var[line[2]]))
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size
+
     elif line[0].lower() == "srai":
-        # TODO implementation
-        pass
+        # arithmetic right shift on reg2 by amount held in immediate and store to reg1
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        value = immediate_to_bits(line[3])
+        write_bits(value)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
+
     elif line[0].lower() == "ble":
-        # TODO implementation
-        pass
+        # TODO can be merged with BGE instruction ? (ble reg1,reg2,label <=> bge reg2,reg1,label)
+        # branch if reg1 is less than or equal to reg2
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        address = search_addr_by_label(line[3], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+
     elif line[0].lower() == "fsub.d":
         # TODO implementation
         pass
