@@ -63,7 +63,7 @@ opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1,
           "fsqrt.d":[0, 0, 1, 0, 1, 0, 1], "fadd.d":[0, 0, 1, 0, 1, 0, 0], "fmv.s.x":[0, 0, 0, 1, 0, 1, 1], 
           "bgt":[0, 0, 0, 1, 0, 1, 0], "fadd.s":[0, 0, 0, 1, 0, 0, 1], "fmul.s":[0, 0, 0, 1, 0, 0, 0]}
 # TODO Instructions to be merged (recalculate huffman encodings)
-# mv -> addi
+# mv -> add         !!! NOTE this increases the number of uses for register zero
 # ble -> bge    
 
 
@@ -203,6 +203,7 @@ for line in f:
     line = re.split("[ ,]+",line)
     line[0]=line[0].lower()
     if line[0] == "addi":
+        # addi: reg1 = reg2 + immediate (sign extended)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -228,13 +229,21 @@ for line in f:
         write_bits(opcode[line[0]])
         curr_address += len(opcode[line[0]])
 
-    elif line[0] == "add":
-        # reg1 = reg2 + reg3
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+    elif line[0] == "add" or line[0] == "mv":
+        if line[0] == "add":
+            # reg1 = reg2 + reg3
+            write_bits(opcode[line[0]])
+            write_bits(reg_dict[line[1]])
+            write_bits(reg_dict[line[2]])
+            write_bits(reg_dict[line[3]])
+            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        else:
+            # mv: move reg2 in reg1 (addi reg1, reg2, zero)
+            write_bits(opcode["add"])
+            write_bits(reg_dict[line[1]])
+            write_bits(reg_dict[line[2]])
+            write_bits(reg_dict["zero"])
+            curr_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
 
     elif line[0] == "bge":
         # branch if reg1 is greater than or equal to reg2
@@ -252,14 +261,6 @@ for line in f:
         address = search_addr_by_label(line[2], curr_address)
         write_bits(address)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + mem_address_size
-
-    elif line[0] == "mv":
-        # move reg2 to reg1
-        # TODO can be merged with addi ? (mv reg1, reg2 <=> add reg1,reg2,zero)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
 
     elif line[0] == "sd":
         # store 64 bits (????) from reg to mem  !!!
