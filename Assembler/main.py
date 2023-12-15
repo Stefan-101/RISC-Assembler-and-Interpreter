@@ -201,34 +201,34 @@ for line in f:
     # start processing instructions
 
     line = re.split("[ ,]+",line)
-    # TODO line[0] to lowercase ??
-    if line[0].lower() == "addi":
+    line[0]=line[0].lower()
+    if line[0] == "addi":
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
         write_bits(immediate_to_bits(line[3]))
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
-    elif line[0].lower() == "j":
+    elif line[0] == "j":
         # jump to label
         write_bits(opcode[line[0]])
         address = search_addr_by_label(line[1], curr_address)
         write_bits(address)
         curr_address += len(opcode[line[0]]) + mem_address_size
 
-    elif line[0].lower() == "li":
+    elif line[0] == "li":
         # load immediate into reg
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(immediate_to_bits(line[2]))
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size
 
-    elif line[0].lower() == "ret":
+    elif line[0] == "ret":
         # ret will end the execution for our functions
         write_bits(opcode[line[0]])
         curr_address += len(opcode[line[0]])
 
-    elif line[0].lower() == "add":
+    elif line[0] == "add":
         # reg1 = reg2 + reg3
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -236,7 +236,7 @@ for line in f:
         write_bits(reg_dict[line[3]])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
-    elif line[0].lower() == "bge":
+    elif line[0] == "bge":
         # branch if reg1 is greater than or equal to reg2
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -245,7 +245,7 @@ for line in f:
         write_bits(address)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
-    elif line[0].lower() == "beqz":
+    elif line[0] == "beqz":
         # branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -253,7 +253,7 @@ for line in f:
         write_bits(address)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + mem_address_size
 
-    elif line[0].lower() == "mv":
+    elif line[0] == "mv":
         # move reg2 to reg1
         # TODO can be merged with addi ? (mv reg1, reg2 <=> add reg1,reg2,zero)
         write_bits(opcode[line[0]])
@@ -261,7 +261,7 @@ for line in f:
         write_bits(reg_dict[line[2]])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
 
-    elif line[0].lower() == "sd":
+    elif line[0] == "sd":
         # store 64 bits (????) from reg to mem  !!!
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -272,14 +272,14 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "fmv.s":
+    elif line[0] == "fmv.s":
         # copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
 
-    elif line[0].lower() == "lb":
+    elif line[0] == "lb":
         # load 8 bits from mem address, sign extend the value and store to reg
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -290,7 +290,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "sb":
+    elif line[0] == "sb":
         # store 8 bits from reg to mem
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -301,7 +301,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "call":
+    elif line[0] == "call":
         # could be expanded, but instructions from expansion are not implemented (will be hardcoded in the interpreter)
         write_bits(opcode[line[0]])
         func_name = line[1]
@@ -310,7 +310,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + func_name_length
         # TODO encode function name
 
-    elif line[0].lower() == "ld":
+    elif line[0] == "ld":
         # load 64 bits (???) from mem address and store to reg
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -321,7 +321,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "lw":
+    elif line[0] == "lw":
         # load 32 bits from mem address, sign extend the value (???) and store to reg
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -332,7 +332,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "fld":
+    elif line[0] == "fld":
         # load 64 bits (???) from mem address and store to reg (fp)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -343,7 +343,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "slli":
+    elif line[0] == "slli":
         # logical left shift on reg2 by amount held in immediate and store to reg1
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -352,7 +352,7 @@ for line in f:
         write_bits(value)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
-    elif line[0].lower() == "fsw":
+    elif line[0] == "fsw":
         # store 32 bit fp to memory address
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -363,7 +363,7 @@ for line in f:
         write_bits(reg_dict[reg])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
-    elif line[0].lower() == "la":
+    elif line[0] == "la":
         # load address in register
         # TODO can be merged with LI instruction ? (LA reg1, var_name <=> LI reg1, $var_name)
         write_bits(opcode[line[0]])
@@ -371,7 +371,7 @@ for line in f:
         write_bits(immediate_to_bits(glb_var[line[2]]))
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size
 
-    elif line[0].lower() == "srai":
+    elif line[0] == "srai":
         # arithmetic right shift on reg2 by amount held in immediate and store to reg1
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
@@ -380,7 +380,7 @@ for line in f:
         write_bits(value)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
-    elif line[0].lower() == "ble":
+    elif line[0] == "ble":
         # TODO can be merged with BGE instruction ? (ble reg1,reg2,label <=> bge reg2,reg1,label)
         # branch if reg1 is less than or equal to reg2
         write_bits(opcode[line[0]])
@@ -390,43 +390,43 @@ for line in f:
         write_bits(address)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
-    elif line[0].lower() == "fsub.d":
+    elif line[0] == "fsub.d":
         # TODO implementation
         pass
-    elif line[0].lower() == "fmul.d":
+    elif line[0] == "fmul.d":
         # TODO implementation
         pass
-    elif line[0].lower() == "fgt.s":
+    elif line[0] == "fgt.s":
         # TODO implementation
         pass
-    elif line[0].lower() == "flt.s":
+    elif line[0] == "flt.s":
         # TODO implementation
         pass
-    elif line[0].lower() == "flw":
+    elif line[0] == "flw":
         # TODO implementation
         pass
-    elif line[0].lower() == "sub":
+    elif line[0] == "sub":
         # TODO implementation
         pass
-    elif line[0].lower() == "bnez":
+    elif line[0] == "bnez":
         # TODO implementation
         pass
-    elif line[0].lower() == "fadd.d":
+    elif line[0] == "fadd.d":
         # TODO implementation
         pass
-    elif line[0].lower() == "fsqrt.d":
+    elif line[0] == "fsqrt.d":
         # TODO implementation
         pass
-    elif line[0].lower() == "bgt":
+    elif line[0] == "bgt":
         # TODO implementation
         pass
-    elif line[0].lower() == "fmv.s.x":
+    elif line[0] == "fmv.s.x":
         # TODO implementation
         pass
-    elif line[0].lower() == "fmul.s":
+    elif line[0] == "fmul.s":
         # TODO implementation
         pass
-    elif line[0].lower() == "fadd.s":
+    elif line[0] == "fadd.s":
         # TODO implementation
         pass
 

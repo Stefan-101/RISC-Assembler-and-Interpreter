@@ -1,1 +1,1 @@
-srai    t0, t0, 1
+sRai    t0, t0, 1
