@@ -14,17 +14,18 @@ def write_bits(bits_arr):
             binary_file.write(bytearray([byte]))
 
 # immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
-immediate_size = 8
+# What size are the registers ??? !!!
+immediate_size = 32
 def immediate_to_bits(string):
     num = int(string)
 
     if num >= 0:
         bin_val = bin(num)
-        bin_arr = [0]*(8-len(bin_val)+2)
+        bin_arr = [0]*(32-len(bin_val)+2)
         bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
     else:
         bin_val = bin(abs(num)-1)
-        bin_arr = bin_arr = [1]*(8-len(bin_val)+2)
+        bin_arr = bin_arr = [1]*(32-len(bin_val)+2)
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
     return bin_arr
 
@@ -43,8 +44,12 @@ def process_labels(file_name):
 
 # I/O Files
 bin_file_name = "temp.o"
-code_file_name = "func_10.txt"
+code_file_name = "instr_tester.txt"
 f = open(code_file_name)
+
+# TEMP
+temp = open(bin_file_name,"w")
+temp.close()
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
 opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1, 1], 
@@ -68,63 +73,63 @@ reg_dict = {"t0": [1, 1, 1],
             "ft0": [1, 0, 1, 1], 
             "a1": [1, 0, 1, 0],  
             "t3": [0, 1, 1, 1],  
-            "ft1": [0, 1, 1, 0], 
-            "t2": [0, 1, 0, 1],
+            "ft1": [0, 1, 0, 1], 
+            "t2": [0, 1, 0, 0],
             "t4": [0, 0, 0, 1],
-            "a2": [0, 0, 0, 0],
-            "fa0": [1, 1, 0, 0, 1, 1],
-            "t5": [1, 1, 0, 0, 1, 0],
-            "s1": [1, 1, 0, 0, 0, 1],
-            "fa2": [1, 1, 0, 0, 0, 0],
-            "fa1": [0, 1, 0, 0, 1, 1],
-            "ra": [0, 1, 0, 0, 1, 0],
-            "ft3": [0, 1, 0, 0, 0, 1, 1],
-            "ft2": [0, 1, 0, 0, 0, 1, 0],
-            "zero": [0, 1, 0, 0, 0, 0, 1],
-            "a3": [0, 1, 0, 0, 0, 0, 0, 1],
-            "ft11": [0, 1, 0, 0, 0, 0, 0, 0, 1],
-            "ft10": [0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft9": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft8": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs11": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs10": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs9": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs8": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs7": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs5": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs4": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs3": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs2": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fa7": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fa6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fa5": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fa4": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fa3": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs1": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "fs0": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft7": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft5": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "ft4": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "t6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s11": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s10": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s9": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s8": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s7": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s5": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s4": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],        
-            "s3": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],     
-            "s2": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  
-            "a7": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "a6": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "a5": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "a4": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "s0": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "tp": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-            "gp": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+            "a2": [1, 1, 0, 0, 1],
+            "zero": [0, 0, 0, 0, 1],
+            "t5": [1, 1, 0, 0, 0, 1],
+            "s1": [1, 1, 0, 0, 0, 0],
+            "fa0": [0, 0, 0, 0, 0],
+            "fa2": [0, 1, 1, 0, 1, 0],
+            "fa1": [0, 1, 1, 0, 0, 1],
+            "ra": [0, 1, 1, 0, 0, 0],
+            "ft2": [0, 1, 1, 0, 1, 1, 1, 1],
+            "ft3": [0, 1, 1, 0, 1, 1, 0],
+            "a3": [0, 1, 1, 0, 1, 1, 1, 0, 1],
+            "ft11": [0, 1, 1, 0, 1, 1, 1, 0, 0, 1],
+            "ft10": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1],
+            "ft9": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1],
+            "ft8": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+            "fs11": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1],
+            "fs10": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs9": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs8": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs7": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs5": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs4": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs3": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs2": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fa7": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fa6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fa5": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fa4": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fa3": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs1": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "fs0": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "ft7": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "ft6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "ft5": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "ft4": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "t6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s11": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s10": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s9": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s8": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s7": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s5": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],        
+            "s4": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],     
+            "s3": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  
+            "s2": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "a7": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "a6": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "a5": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "a4": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "s0": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "tp": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            "gp": [0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
             # long encodings occour due to some registers not being used at all in our 12 functions
 
 current_section = 0
@@ -194,8 +199,8 @@ for line in f:
     # start processing instructions
 
     line = re.split("[ ,]+",line)
+    # TODO line[0] to lowercase ??
     if line[0].lower() == "addi":
-        # TODO line[0] to lowercase ??
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -203,50 +208,126 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
     elif line[0].lower() == "j":
+        # jump to label
         write_bits(opcode[line[0]])
         address = search_addr_by_label(line[1], curr_address)
         write_bits(address)
         curr_address += len(opcode[line[0]]) + mem_address_size
 
     elif line[0].lower() == "li":
-        # TODO implementation
-        pass
+        # load immediate into reg
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(immediate_to_bits(line[2]))
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size
+
     elif line[0].lower() == "ret":
-        # TODO implementation
-        pass
+        # ret will end the execution for our functions
+        write_bits(opcode[line[0]])
+        curr_address += len(opcode[line[0]])
+
     elif line[0].lower() == "add":
-        # TODO implementation
-        pass
+        # reg1 = reg2 + reg3
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0].lower() == "bge":
-        # TODO implementation
-        pass
+        # branch if reg1 is greater than or equal to reg2
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        address = search_addr_by_label(line[3], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+
     elif line[0].lower() == "beqz":
-        # TODO implementation
-        pass
+        # branch if reg is equal to zero
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        address = search_addr_by_label(line[2], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + mem_address_size
+
     elif line[0].lower() == "mv":
-        # TODO implementation
-        pass
+        # move reg2 to reg1
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+
     elif line[0].lower() == "sd":
-        # TODO implementation
-        pass
+        # store 64 bits (????) from reg to mem  !!!
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "fmv.s":
-        # TODO implementation
-        pass
+        # copy fp reg2 in reg1
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+
     elif line[0].lower() == "lb":
-        # TODO implementation
-        pass
+        # load 8 bits from mem address, sign extend the value and store to reg
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "sb":
-        # TODO implementation
-        pass
+        # store 8 bits from reg to mem
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "call":
-        # TODO implementation
-        pass
+        write_bits(opcode[line[0]])
+        func_name = line[1]
+        write_bits([1,1,1,1,1,1,1,1])   # DUMMY value
+        func_name_length = 8
+        curr_address += len(opcode[line[0]]) + func_name_length
+        # TODO encode function name
+
     elif line[0].lower() == "ld":
-        # TODO implementation
-        pass
+        # load 64 bits (???) from mem address and store to reg
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "lw":
-        # TODO implementation
-        pass
+        # load 32 bits from mem address, sign extend the value (???) and store to reg
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0].lower() == "fld":
         # TODO implementation
         pass
