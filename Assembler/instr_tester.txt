@@ -1,1 +1,2 @@
-mv t1,t0
+#bge t0,t1,1f
+ble t0,t1,1f

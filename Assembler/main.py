@@ -63,7 +63,7 @@ opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1,
           "fsqrt.d":[0, 0, 1, 0, 1, 0, 1], "fadd.d":[0, 0, 1, 0, 1, 0, 0], "fmv.s.x":[0, 0, 0, 1, 0, 1, 1], 
           "bgt":[0, 0, 0, 1, 0, 1, 0], "fadd.s":[0, 0, 0, 1, 0, 0, 1], "fmul.s":[0, 0, 0, 1, 0, 0, 0]}
 # TODO Instructions to be merged (recalculate huffman encodings)
-# mv -> add         !!! NOTE this increases the number of uses for register zero
+# mv -> add         !!! NOTE this increases the number of uses for register zero (redo registers encoding)
 # ble -> bge    
 
 
@@ -245,14 +245,23 @@ for line in f:
             write_bits(reg_dict["zero"])
             curr_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
 
-    elif line[0] == "bge":
-        # branch if reg1 is greater than or equal to reg2
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        address = search_addr_by_label(line[3], curr_address)
-        write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+    elif line[0] == "bge" or line[0] == "ble":
+        if line[0] == "bge":
+            # branch if reg1 is greater than or equal to reg2
+            write_bits(opcode[line[0]])
+            write_bits(reg_dict[line[1]])
+            write_bits(reg_dict[line[2]])
+            address = search_addr_by_label(line[3], curr_address)
+            write_bits(address)
+            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+        else:
+            # ble reg1,reg2,label <=> bge reg2,reg1,label
+            write_bits(opcode["bge"])
+            write_bits(reg_dict[line[2]])
+            write_bits(reg_dict[line[1]])
+            address = search_addr_by_label(line[3], curr_address)
+            write_bits(address)
+            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
     elif line[0] == "beqz":
         # branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
@@ -380,16 +389,6 @@ for line in f:
         value = immediate_to_bits(line[3])
         write_bits(value)
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
-
-    elif line[0] == "ble":
-        # TODO can be merged with BGE instruction ? (ble reg1,reg2,label <=> bge reg2,reg1,label)
-        # branch if reg1 is less than or equal to reg2
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        address = search_addr_by_label(line[3], curr_address)
-        write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
     elif line[0] == "fsub.d":
         # TODO implementation
