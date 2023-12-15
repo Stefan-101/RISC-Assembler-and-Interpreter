@@ -13,6 +13,20 @@ def write_bits(bits_arr):
         with open(bin_file_name, "ab") as binary_file:
             binary_file.write(bytearray([byte]))
 
+# immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
+def immediate_to_bits(string):
+    num = int(string)
+
+    if num >= 0:
+        bin_val = bin(num)
+        bin_arr = [0]*(8-len(bin_val)+2)
+        bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
+    else:
+        bin_val = bin(abs(num)-1)
+        bin_arr = bin_arr = [1]*(8-len(bin_val)+2)
+        bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
+    return bin_arr
+
 def process_labels(file_name):
     f = open(file_name)
     for line in f:
@@ -25,7 +39,7 @@ bin_file_name = "func_1.o"
 code_file_name = "func_1.txt"
 f = open(code_file_name)
 
-# OPCODES dictionary ~ encoded using huffman coding
+# OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
 opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1, 1], 
           "add":[1, 0, 0, 0], "bge":[0, 1, 0, 0], "beqz":[0, 0, 0, 0], "mv":[1, 0, 1, 0, 1], 
           "fmv.s":[1, 0, 0, 1, 1], "sd":[1, 0, 0, 1, 0], "lb":[0, 1, 1, 1, 1], "call":[0, 1, 1, 0, 1], 
@@ -39,7 +53,7 @@ opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1,
 
 
 
-# Register codes dictionary ~ encoded using huffman coding
+# Register codes dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
 reg_dict = {"t0": [1, 1, 1], 
             "t1": [1, 0, 0],     
             "a0": [0, 0, 1],     
@@ -149,9 +163,10 @@ for line in f:
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
-        write_bits([0,0,0,0,0,0,0,1])   # TODO transform immediate value to byte array
+        write_bits(immediate_to_bits(line[3]))
         immediate_length = 8    # TEMPORARY ~ need immediat value byte transformation
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_length
+        print(curr_address)
     elif line[0].lower() == "j":
         # TODO implementation
         pass
