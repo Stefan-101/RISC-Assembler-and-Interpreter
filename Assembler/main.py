@@ -14,6 +14,7 @@ def write_bits(bits_arr):
             binary_file.write(bytearray([byte]))
 
 # immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
+immediate_size = 8
 def immediate_to_bits(string):
     num = int(string)
 
@@ -26,6 +27,12 @@ def immediate_to_bits(string):
         bin_arr = bin_arr = [1]*(8-len(bin_val)+2)
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
     return bin_arr
+
+mem_address_size = 17
+def search_addr_by_label(label, curr_addr):
+    # TODO implementation
+    # return dummy value for now    
+    return [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 def process_labels(file_name):
     f = open(file_name)
@@ -122,7 +129,6 @@ reg_dict = {"t0": [1, 1, 1],
 
 current_section = 0
 curr_address = 0
-labels = []
 for line in f:
     line = line.lstrip().rstrip()
 
@@ -151,25 +157,26 @@ for line in f:
         #continue       ~ go to next line TODO uncomment after implementation
 
     if (line[-1] == ":"):
-        # save label address
-        labels.append((line[:len(line)-1],curr_address))
+        # ignore labels (they are processed separately)
         continue
 
     # start processing instructions
 
     line = re.split("[ ,]+",line)
     if line[0].lower() == "addi":
-        # TODO implementation
+        # TODO line[0] to lowercase ??
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
         write_bits(immediate_to_bits(line[3]))
-        immediate_length = 8    # TEMPORARY ~ need immediat value byte transformation
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_length
-        print(curr_address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
+
     elif line[0].lower() == "j":
-        # TODO implementation
-        pass
+        write_bits(opcode[line[0]])
+        address = search_addr_by_label(line[1], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + mem_address_size
+        
     elif line[0].lower() == "li":
         # TODO implementation
         pass
