@@ -30,7 +30,7 @@ def immediate_to_bits(string):
 
 mem_address_size = 17
 def search_addr_by_label(label, curr_addr):
-    # TODO implementation
+    # TODO implementation (after process_labels is implemented)
     # return dummy value for now    
     return [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
@@ -42,8 +42,8 @@ def process_labels(file_name):
     f.close()
 
 # I/O Files
-bin_file_name = "func_1.o"
-code_file_name = "func_1.txt"
+bin_file_name = "temp.o"
+code_file_name = "func_10.txt"
 f = open(code_file_name)
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
@@ -129,9 +129,12 @@ reg_dict = {"t0": [1, 1, 1],
 
 current_section = 0
 curr_address = 0
+glb_var={}
 for line in f:
     line = line.lstrip().rstrip()
 
+    if line == "":
+        continue        # ignore blank lines
     if line[0] == "#":
         continue        # ignore comments
     
@@ -151,13 +154,41 @@ for line in f:
         continue
 
 
-    if current_section == 1:
-        # TODO save global variables
-        pass
-        #continue       ~ go to next line TODO uncomment after implementation
+    if current_section == 1:        # data section
+        # Note: only works with .rodata at the start of the code
+        var_name = line[:line.find(":")]
+        var_type = line[line.find("."):].split()[0]
+        var_arg = line[line.find(var_type)+len(var_type)+1:]
+        print(var_name, var_type, var_arg)
+        
+        glb_var[var_name] = curr_address
+
+        if var_type == ".asciz":
+            bytes_written = 1           # consider null terminator written
+            for i in range(1,len(var_arg)-1):
+                symbol_code = ord(var_arg[i])
+
+                if symbol_code == 92:
+                    # special character (only \n is implemented below)
+                    continue
+                if ord(var_arg[i-1]) == 92:
+                    if var_arg[i] == "n":
+                        symbol_code = 10        # newline
+
+                binary_ascii = list(map(int,list(bin(symbol_code)[2:])))
+                binary_ascii[0:0] = [0]*(8-len(binary_ascii))
+                write_bits(binary_ascii)
+                bytes_written += 1
+            
+            write_bits([0,0,0,0,0,0,0,0])     # null asciz terminator
+            
+            curr_address += 8*bytes_written
+
+        # implementation for other data types ..
+        continue
 
     if (line[-1] == ":"):
-        # ignore labels (they are processed separately)
+        # ignore labels (processed separately)
         continue
 
     # start processing instructions
@@ -176,7 +207,7 @@ for line in f:
         address = search_addr_by_label(line[1], curr_address)
         write_bits(address)
         curr_address += len(opcode[line[0]]) + mem_address_size
-        
+
     elif line[0].lower() == "li":
         # TODO implementation
         pass
