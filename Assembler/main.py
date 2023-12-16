@@ -82,7 +82,10 @@ reg_dict = {"t0": [1, 1, 1],
 
 label_addresses = []    # list with labels and their addresses
 simulated_address = 0   # bit counter used to simulate addresses in process_labels function 
-                        # also used as an offset for setting global variables addresses
+                        # also used as an offset for setting global variables addresses  (global variables 
+                        # are written right after instructions)
+MEM_ADDRESS_SIZE = 16
+IMMEDIATE_SIZE = 7      # our maximum value is 32 -> we only need 7 bits to represent that in 2's complement
 
 bit_stack = []
 def write_bits(bits_arr):
@@ -99,7 +102,6 @@ def write_bits(bits_arr):
 
 # immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
 # NOTE What size are the registers ??? !!!
-IMMEDIATE_SIZE = 7              # our maximum value is 32 -> we only need 7 bits to represent that in 2's complement
 def immediate_to_bits(string):
     num = int(string)
 
@@ -113,7 +115,6 @@ def immediate_to_bits(string):
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
     return bin_arr
 
-MEM_ADDRESS_SIZE = 16
 def search_addr_by_label(label, curr_addr):
     # TODO implementation (after process_labels is implemented)
     # return dummy value for now    
@@ -649,12 +650,6 @@ for line in f:
         write_bits(reg_dict[line[2]])
         write_bits(reg_dict[line[3]])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-# NOTE TEMPORARY TO BE REMOVED
-#write_bits([0,0,0,0,0,0,0])
-#curr_address += 7
-print("real address", curr_address)
-print(label_addresses)
 
 # Write global variables in object file
 curr_address += len(glb_var_bits)
