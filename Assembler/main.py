@@ -389,7 +389,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
     elif line[0] == "fsub.d":
-        # reg1 = reg2 - reg3
+        # reg1 = reg2 - reg3  ~  fp
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -397,7 +397,7 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
     elif line[0] == "fmul.d":
-        # reg1 = reg2 * reg3
+        # reg1 = reg2 * reg3  ~  fp
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(reg_dict[line[2]])
@@ -447,22 +447,50 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + mem_address_size
 
     elif line[0] == "fadd.d":
-        # TODO implementation
-        pass
+        # reg1 = reg2 + reg3  ~  fp
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0] == "fsqrt.d":
-        # TODO implementation
-        pass
+        # reg1 = sqrt(reg2)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+
     elif line[0] == "bgt":
-        # TODO implementation
-        pass
+        # branch if reg1 is greater than reg2
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        address = search_addr_by_label(line[3], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+
     elif line[0] == "fmv.s.x":
-        # TODO implementation
-        pass
+        # reg1 = reg2 (move from integer register to fp register)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+
     elif line[0] == "fmul.s":
-        # TODO implementation
-        pass
+        # reg1 = reg2 * reg3  ~  fp
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0] == "fadd.s":
-        # TODO implementation
-        pass
+        # reg1 = reg2 + reg3  ~  fp
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
 write_bits([0,0,0,0,0,0,0,0])   # write unwritten bits still in the stack

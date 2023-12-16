@@ -1,27 +1,36 @@
 .section .text
-.global bubsort
-bubsort:
-    # a0 = long *list
-    # a1 = size
-    # t0 = swapped
-    # t1 = i
-1: # do loop
-    li t0, 0          # swapped = false
-    li t1, 1          # i = 1
-2: # for loop
-    bge t1, a1, 2f    # break if i >= size
-    slli t3, t1, 3    # scale i by 8 (for long)
-    add t3, a0, t3    # new scaled memory address
-    ld  t4, -8(t3)    # load list[i-1] into t4
-    ld  t5, 0(t3)     # load list[i] into t5
-    ble t4, t5, 3f    # if list[i-1] < list[i], it's in position
-    # if we get here, we need to swap
-    li  t0, 1         # swapped = true
-    sd  t4, 0(t3)     # list[i] = list[i-1]
-    sd  t5, -8(t3)    # list[i-1] = list[i]
-3: # bottom of for loop body
-    addi t1, t1, 1    # i++
-    j    2b           # loop again
-2: # bottom of do loop body
-    bnez t0, 1b       # loop if swapped = true
-    ret               # return via return address register
+.global matmul
+matmul:
+    # a0 = dst[3]
+    # a1 = matrix[3][3]
+    # a2 = vector[3]
+    # t0 = r
+    # t1 = c
+    # t3 = 3
+    # ft0 = d
+    # Row for loop
+    li      t0, 0
+    li      t3, 3
+1:
+    bge     t0, t3, 1f  # break when we are done
+    fmv.s.x fa0, zero   # Set d = 0
+    # Column for loop
+    li      t1, 0
+2:
+    bge     t1, t3, 2f
+    flw     ft0, 0(a1)     # Load matrix value
+    flw     ft1, 0(a2)     # Load vector value
+    fmul.s  ft0, ft0, ft1  # ft0 = matrix[r][c] * vec[c]
+    fadd.s  fa0, fa0, ft0  # d = d + ft0
+    addi    t1, t1, 1
+    addi    a1, a1, 4   # Move to the next matrix value
+    addi    a2, a2, 4   # Move to the next vector value
+    j       2b
+2:
+    addi    a2, a2, -12 # Move the vector back to the top
+    fsw     fa0, 0(a0)  # dst[r] = d
+    addi    t0, t0, 1
+    addi    a0, a0, 4   # Move to next destination
+    j       1b
+1:
+    ret
