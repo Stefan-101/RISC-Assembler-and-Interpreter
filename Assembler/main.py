@@ -15,25 +15,25 @@ def write_bits(bits_arr):
 
 # immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
 # What size are the registers ??? !!!
-immediate_size = 32
+immediate_size = 7              # our maximum value is 32 -> we only need 7 bits to represent that in 2's complement
 def immediate_to_bits(string):
     num = int(string)
 
     if num >= 0:
         bin_val = bin(num)
-        bin_arr = [0]*(32-len(bin_val)+2)
+        bin_arr = [0]*(immediate_size-len(bin_val)+2)
         bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
     else:
         bin_val = bin(abs(num)-1)
-        bin_arr = bin_arr = [1]*(32-len(bin_val)+2)
+        bin_arr = bin_arr = [1]*(immediate_size-len(bin_val)+2)
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
     return bin_arr
 
-mem_address_size = 17
+mem_address_size = 16
 def search_addr_by_label(label, curr_addr):
     # TODO implementation (after process_labels is implemented)
     # return dummy value for now    
-    return [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    return [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 def process_labels(file_name):
     f = open(file_name)
@@ -63,8 +63,9 @@ opcode = {"addi":[1, 1, 1], "j":[1, 1, 0, 1], "ret":[1, 1, 0, 0], "li":[1, 0, 1,
           "fsqrt.d":[0, 0, 1, 0, 1, 0, 1], "fadd.d":[0, 0, 1, 0, 1, 0, 0], "fmv.s.x":[0, 0, 0, 1, 0, 1, 1], 
           "bgt":[0, 0, 0, 1, 0, 1, 0], "fadd.s":[0, 0, 0, 1, 0, 0, 1], "fmul.s":[0, 0, 0, 1, 0, 0, 0]}
 # TODO Instructions to be merged (recalculate huffman encodings)
-# mv -> add         !!! NOTE this increases the number of uses for register zero (redo registers encoding)
-# ble -> bge    
+# mv    -> add         !!! NOTE this increases the number of uses for register zero (redo registers encoding)
+# ble   -> bge    
+# fgt.s -> flt.s
 
 
 
@@ -375,7 +376,6 @@ for line in f:
 
     elif line[0] == "la":
         # load address in register
-        # TODO can be merged with LI instruction ? (LA reg1, var_name <=> LI reg1, $var_name)
         write_bits(opcode[line[0]])
         write_bits(reg_dict[line[1]])
         write_bits(immediate_to_bits(glb_var[line[2]]))
@@ -391,20 +391,48 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + immediate_size
 
     elif line[0] == "fsub.d":
-        # TODO implementation
-        pass
+        # reg1 = reg2 - reg3
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0] == "fmul.d":
-        # TODO implementation
-        pass
-    elif line[0] == "fgt.s":
-        # TODO implementation
-        pass
-    elif line[0] == "flt.s":
-        # TODO implementation
-        pass
+        # reg1 = reg2 * reg3
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
+    elif line[0] == "flt.s" or line[0] == "fgt.s":
+        if line[0] == "flt.s":
+            # reg1 = reg2 < reg3    (boolean result)
+            write_bits(opcode[line[0]])
+            write_bits(reg_dict[line[1]])
+            write_bits(reg_dict[line[2]])
+            write_bits(reg_dict[line[3]])
+            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        else:
+            # reg1 = reg3 < reg2
+            write_bits(opcode[line[0]])
+            write_bits(reg_dict[line[1]])
+            write_bits(reg_dict[line[3]])
+            write_bits(reg_dict[line[2]])
+            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0] == "flw":
-        # TODO implementation
-        pass
+        # load 32 bits fp from mem address and store to reg
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        offset = immediate_to_bits(line[2].split("(")[0])
+        write_bits(offset)
+        reg = re.split("[()]+",line[2])
+        reg = reg[1]
+        write_bits(reg_dict[reg])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
+
     elif line[0] == "sub":
         # TODO implementation
         pass
