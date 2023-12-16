@@ -138,9 +138,9 @@ reg_dict = {"t0": [1, 1, 1],
             "gp": [1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
             # long encodings occour due to some registers not being used at all in our 12 functions
 
-current_section = 0
-curr_address = 0
-glb_var={}
+current_section = 0     # data/text sections
+curr_address = 0        # current bit address
+glb_var={}              # dictionary with global variable addresses
 for line in f:
     line = line.lstrip().rstrip()
 
@@ -160,12 +160,12 @@ for line in f:
         current_section = 2
         continue
     elif ".global" in line:
-        # set entry label
+        # TODO set address to start executing from
         entry_label = line.split()[1]
         continue
 
 
-    if current_section == 1:        # data section
+    if current_section == 1:        # data section ~ save global variables
         # Note: only works with .rodata at the start of the code
         var_name = line[:line.find(":")]
         var_type = line[line.find("."):].split()[0]
@@ -194,7 +194,7 @@ for line in f:
             
             curr_address += 8*bytes_written
 
-        # implementation for other data types ..
+        # other variable types are not implemented
         continue
 
     if (line[-1] == ":"):
