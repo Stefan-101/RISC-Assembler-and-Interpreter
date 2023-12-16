@@ -1,38 +1,27 @@
 .section .text
-.global minmax
-minmax:
-    # fa0 = float a
-    # fa1 = float b
-    # fa2 = float c
-    # ft0 = min
-    # ft1 = max
-    # a0  = float &mn
-    # a1  = float &mx
-    # Set mn = mx = a
-    fmv.s   ft0, fa0
-    fmv.s   ft1, fa0
-    fgt.s   t0, ft0, fa1  # if (mn > b)
-    beqz    t0, 1f        # skip if false
-    # if we get here, then mn is > b
-    fmv.s   ft0, fa1      # ft0 is mn, set it to b
-    j       2f            # jump past the else if statement
-1:
-    flt.s   t0, ft1, fa1  # else if (mx < b)
-    beqz    t0, 2f        # skip if false
-    # if we get here then mx < b
-    fmv.s   ft1, fa1      # ft1 is mx, set it to b
-2:
-    fgt.s   t0, ft0, fa2  # if (mn > c)
-    beqz    t0, 1f        # skip if false
-    # if we get here then mn > c
-    fmv.s   ft0, fa2      # ft0 is mn, set it to c
-    j       2f            # skip the else if statement
-1:
-    flt.s   t0, ft1, fa2  # else if (mx < c)
-    beqz    t0, 2f        # skip if false
-    # If we get here then mx < c
-    fmv.s   ft1, fa2      # ft1 is mx, set it to c
-2:
-    fsw     ft0, 0(a0)    # store minimum into &mn
-    fsw     ft1, 0(a1)    # store maximum into &mx
-    ret                   # return via return address register
+.global bubsort
+bubsort:
+    # a0 = long *list
+    # a1 = size
+    # t0 = swapped
+    # t1 = i
+1: # do loop
+    li t0, 0          # swapped = false
+    li t1, 1          # i = 1
+2: # for loop
+    bge t1, a1, 2f    # break if i >= size
+    slli t3, t1, 3    # scale i by 8 (for long)
+    add t3, a0, t3    # new scaled memory address
+    ld  t4, -8(t3)    # load list[i-1] into t4
+    ld  t5, 0(t3)     # load list[i] into t5
+    ble t4, t5, 3f    # if list[i-1] < list[i], it's in position
+    # if we get here, we need to swap
+    li  t0, 1         # swapped = true
+    sd  t4, 0(t3)     # list[i] = list[i-1]
+    sd  t5, -8(t3)    # list[i-1] = list[i]
+3: # bottom of for loop body
+    addi t1, t1, 1    # i++
+    j    2b           # loop again
+2: # bottom of do loop body
+    bnez t0, 1b       # loop if swapped = true
+    ret               # return via return address register

@@ -439,8 +439,13 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
     elif line[0] == "bnez":
-        # TODO implementation
-        pass
+        # branch if reg is not equal to zero (could have been merged with bne but it is not implemented here)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        address = search_addr_by_label(line[2], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + mem_address_size
+
     elif line[0] == "fadd.d":
         # TODO implementation
         pass
