@@ -199,7 +199,7 @@ for line in f:
         # ignore labels (processed separately)
         continue
 
-    # start processing instructions
+    # START PROCESSING INSTRUCTIONS
 
     line = re.split("[ ,]+",line)
     line[0]=line[0].lower()
@@ -230,39 +230,37 @@ for line in f:
         write_bits(opcode[line[0]])
         curr_address += len(opcode[line[0]])
 
-    elif line[0] == "add" or line[0] == "mv":
-        if line[0] == "add":
-            # reg1 = reg2 + reg3
-            write_bits(opcode[line[0]])
-            write_bits(reg_dict[line[1]])
-            write_bits(reg_dict[line[2]])
-            write_bits(reg_dict[line[3]])
-            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-        else:
-            # mv: move reg2 in reg1 (addi reg1, reg2, zero)
-            write_bits(opcode["add"])
-            write_bits(reg_dict[line[1]])
-            write_bits(reg_dict[line[2]])
-            write_bits(reg_dict["zero"])
-            curr_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
+    elif line[0] == "add":
+        # reg1 = reg2 + reg3
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+    elif line[0] == "mv":
+        # mv: move reg2 in reg1 (<=> addi reg1, reg2, zero)
+        write_bits(opcode["add"])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict["zero"])
+        curr_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
 
-    elif line[0] == "bge" or line[0] == "ble":
-        if line[0] == "bge":
-            # branch if reg1 is greater than or equal to reg2
-            write_bits(opcode[line[0]])
-            write_bits(reg_dict[line[1]])
-            write_bits(reg_dict[line[2]])
-            address = search_addr_by_label(line[3], curr_address)
-            write_bits(address)
-            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
-        else:
-            # ble reg1,reg2,label <=> bge reg2,reg1,label
-            write_bits(opcode["bge"])
-            write_bits(reg_dict[line[2]])
-            write_bits(reg_dict[line[1]])
-            address = search_addr_by_label(line[3], curr_address)
-            write_bits(address)
-            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+    elif line[0] == "bge":
+        # branch if reg1 is greater than or equal to reg2
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        address = search_addr_by_label(line[3], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
+    elif line[0] == "ble":
+        # ble reg1,reg2,label (<=> bge reg2,reg1,label)
+        write_bits(opcode["bge"])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[1]])
+        address = search_addr_by_label(line[3], curr_address)
+        write_bits(address)
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + mem_address_size
 
     elif line[0] == "beqz":
         # branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
@@ -406,21 +404,20 @@ for line in f:
         write_bits(reg_dict[line[3]])
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
-    elif line[0] == "flt.s" or line[0] == "fgt.s":
-        if line[0] == "flt.s":
-            # reg1 = reg2 < reg3    (boolean result)
-            write_bits(opcode[line[0]])
-            write_bits(reg_dict[line[1]])
-            write_bits(reg_dict[line[2]])
-            write_bits(reg_dict[line[3]])
-            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-        else:
-            # reg1 = reg3 < reg2
-            write_bits(opcode["flt.s"])
-            write_bits(reg_dict[line[1]])
-            write_bits(reg_dict[line[3]])
-            write_bits(reg_dict[line[2]])
-            curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+    elif line[0] == "flt.s":
+        # reg1 = reg2 < reg3    (boolean result)
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+    elif line[0] == "fgt.s":
+        # reg1 = reg3 < reg2       (<=> flt.s reg1,reg3,reg2)
+        write_bits(opcode["flt.s"])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[3]])
+        write_bits(reg_dict[line[2]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
 
     elif line[0] == "flw":
         # load 32 bits fp from mem address and store to reg
