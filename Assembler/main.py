@@ -127,7 +127,8 @@ def addr_to_bits(addr):
     bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
     return bin_arr
 
-# process_labels creates a list with addresses of labels used in the code
+# process_labels creates a list with addresses of labels used in the code by passing once through all instructions
+# this list is sorted by default in ascending order
 def process_labels(file_name):
     global simulated_address
     f = open(file_name)
@@ -165,7 +166,7 @@ def process_labels(file_name):
 
         line = re.split("[ ,]+",line)
         line[0]=line[0].lower()
-        # TODO optimize if (many can be removed)
+        # TODO optimize nested if (many can be removed)
         if line[0] == "addi":
             simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
 
@@ -287,7 +288,7 @@ def process_labels(file_name):
 bin_file_name = "temp.o"
 code_file_name = "instr_tester.txt"
 
-# NOTE TEMP - deletes files before writing
+# NOTE TEMP - deletes output file if it exists before writing
 temp = open(bin_file_name,"w")
 temp.close()
 
