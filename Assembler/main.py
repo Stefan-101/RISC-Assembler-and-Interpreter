@@ -416,7 +416,7 @@ for line in f:
             curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
         else:
             # reg1 = reg3 < reg2
-            write_bits(opcode[line[0]])
+            write_bits(opcode["flt.s"])
             write_bits(reg_dict[line[1]])
             write_bits(reg_dict[line[3]])
             write_bits(reg_dict[line[2]])
@@ -434,8 +434,13 @@ for line in f:
         curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + immediate_size + len(reg_dict[reg])
 
     elif line[0] == "sub":
-        # TODO implementation
-        pass
+        # reg1 = reg2 - reg3
+        write_bits(opcode[line[0]])
+        write_bits(reg_dict[line[1]])
+        write_bits(reg_dict[line[2]])
+        write_bits(reg_dict[line[3]])
+        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+
     elif line[0] == "bnez":
         # TODO implementation
         pass
