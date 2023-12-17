@@ -1,7 +1,7 @@
 import re
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
-opcode = {"addi": [1, 1, 0], "add": [0, 1, 0], "j": [1, 1, 1, 1], 
+OPCODE = {"addi": [1, 1, 0], "add": [0, 1, 0], "j": [1, 1, 1, 1], 
           "ret": [1, 0, 1, 1], "li": [1, 0, 1, 0], "bge": [1, 0, 0, 0], 
           "beqz": [0, 0, 0, 0], "fmv.s": [1, 1, 1, 0, 0], "sd": [1, 0, 0, 1, 1], 
           "call": [0, 1, 1, 1, 1], "sb": [0, 1, 1, 1, 0], "lw": [0, 1, 1, 0, 1], 
@@ -14,7 +14,7 @@ opcode = {"addi": [1, 1, 0], "add": [0, 1, 0], "j": [1, 1, 1, 1],
           "fmul.s": [0, 0, 0, 1, 0, 0, 0]}
 
 # Register codes dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
-reg_dict = {"t0": [1, 1, 1], 
+REG_DICT = {"t0": [1, 1, 1], 
             "t1": [0, 1, 1],     
             "a0": [0, 0, 1],     
             "sp": [1, 1, 0, 0],  
@@ -166,121 +166,52 @@ def process_labels(file_name):
 
         line = re.split("[ ,]+",line)
         line[0]=line[0].lower()
-        # TODO optimize nested if (many can be removed)
-        if line[0] == "addi":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
+        if line[0] == "addi" or line[0] == "slli" or line[0] == "srai":
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
 
         elif line[0] == "j":
-            simulated_address += len(opcode[line[0]]) + MEM_ADDRESS_SIZE
+            simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
         elif line[0] == "li":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
         elif line[0] == "ret":
-            simulated_address += len(opcode[line[0]])
+            simulated_address += len(OPCODE[line[0]])
 
         elif line[0] == "add":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
         elif line[0] == "mv":
-            simulated_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
+            simulated_address += len(OPCODE["add"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT["zero"])
 
-        elif line[0] == "bge":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
-        elif line[0] == "ble":
-            simulated_address += len(opcode["bge"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
+        elif line[0] == "bge" or line[0] == "ble":
+            simulated_address += len(OPCODE["bge"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
 
-        elif line[0] == "beqz":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
+        elif line[0] == "beqz" or line[0] == "la" or line[0] == "bnez":
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE
 
-        elif line[0] == "sd":
+        elif (line[0] == "sd" or line[0] == "lb" or line[0] == "ld" or line[0] == "sb" or line[0] == "lw" or line[0] == "fld"
+              or line[0] == "fsw" or line[0] == "flw"):
             reg = re.split("[()]+",line[2])
             reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
-
-        elif line[0] == "fmv.s":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
-
-        elif line[0] == "lb":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
-
-        elif line[0] == "sb":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
         elif line[0] == "call":
             func_name_length = 8
-            simulated_address += len(opcode[line[0]]) + func_name_length
+            simulated_address += len(OPCODE[line[0]]) + func_name_length
             # TODO encode function name
 
-        elif line[0] == "ld":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        elif (line[0] == "fsub.d" or line[0] == "fmul.d" or line[0] == "sub" 
+              or line[0] == "fmul.s" or line[0] == "fadd.s" or line[0] == "fadd.d"):
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
-        elif line[0] == "lw":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        elif line[0] == "flt.s" or line[0] == "fgt.s":
+            simulated_address += len(OPCODE["flt.s"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
-        elif line[0] == "fld":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
-
-        elif line[0] == "slli":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
-
-        elif line[0] == "fsw":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
-
-        elif line[0] == "la":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
-
-        elif line[0] == "srai":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
-
-        elif line[0] == "fsub.d":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "fmul.d":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "flt.s":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-        elif line[0] == "fgt.s":
-            simulated_address += len(opcode["flt.s"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "flw":
-            reg = re.split("[()]+",line[2])
-            reg = reg[1]
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
-
-        elif line[0] == "sub":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "bnez":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
-
-        elif line[0] == "fadd.d":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "fsqrt.d":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+        elif line[0] == "fsqrt.d" or line[0] == "fmv.s.x" or line[0] == "fmv.s":
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]])
 
         elif line[0] == "bgt":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
-
-        elif line[0] == "fmv.s.x":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
-
-        elif line[0] == "fmul.s":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
-
-        elif line[0] == "fadd.s":
-            simulated_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
     
     f.close()
 
@@ -364,296 +295,298 @@ for line in f:
     line[0]=line[0].lower()
     if line[0] == "addi":
         # addi: reg1 = reg2 + immediate (sign extended)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
         write_bits(immediate_to_bits(line[3]))
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
 
     elif line[0] == "j":
         # jump to label
-        write_bits(opcode[line[0]])
+        write_bits(OPCODE[line[0]])
         address = search_addr_by_label(line[1], curr_address)
         write_bits(address)
-        curr_address += len(opcode[line[0]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "li":
         # load immediate into reg
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         write_bits(immediate_to_bits(line[2]))
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
         # ret will end the execution for our functions
-        write_bits(opcode[line[0]])
-        curr_address += len(opcode[line[0]])
+        write_bits(OPCODE[line[0]])
+        curr_address += len(OPCODE[line[0]])
 
     elif line[0] == "add":
         # reg1 = reg2 + reg3
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
     elif line[0] == "mv":
         # mv: move reg2 in reg1 (<=> addi reg1, reg2, zero)
-        write_bits(opcode["add"])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict["zero"])
-        curr_address += len(opcode["add"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict["zero"])
+        write_bits(OPCODE["add"])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT["zero"])
+        curr_address += len(OPCODE["add"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT["zero"])
 
     elif line[0] == "bge":
         # branch if reg1 is greater than or equal to reg2
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
         address = search_addr_by_label(line[3], curr_address)
         write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
     elif line[0] == "ble":
         # ble reg1,reg2,label (<=> bge reg2,reg1,label)
-        write_bits(opcode["bge"])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE["bge"])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[1]])
         address = search_addr_by_label(line[3], curr_address)
         write_bits(address)
-        curr_address += len(opcode["bge"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE["bge"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "beqz":
         # branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         address = search_addr_by_label(line[2], curr_address)
         write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "sd":
         # store 64 bits (????) from reg to mem  !!!
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "fmv.s":
         # copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]])
 
     elif line[0] == "lb":
         # load 8 bits from mem address, sign extend the value and store to reg
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "sb":
         # store 8 bits from reg to mem
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "call":
         # could be expanded, but instructions from expansion are not implemented (will be hardcoded in the interpreter)
-        write_bits(opcode[line[0]])
+        write_bits(OPCODE[line[0]])
         func_name = line[1]
         write_bits([1,1,1,1,1,1,1,1])   # DUMMY value
         func_name_length = 8
-        curr_address += len(opcode[line[0]]) + func_name_length
+        curr_address += len(OPCODE[line[0]]) + func_name_length
         # TODO encode function name
 
     elif line[0] == "ld":
         # load 64 bits (???) from mem address and store to reg
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "lw":
         # load 32 bits from mem address, sign extend the value (???) and store to reg
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "fld":
         # load 64 bits (???) from mem address and store to reg (fp)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "slli":
         # logical left shift on reg2 by amount held in immediate and store to reg1
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
         value = immediate_to_bits(line[3])
         write_bits(value)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
 
     elif line[0] == "fsw":
         # store 32 bit fp to memory address
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "la":
         # load address in register
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         write_bits(addr_to_bits(glb_var[line[2]])) 
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "srai":
         # arithmetic right shift on reg2 by amount held in immediate and store to reg1
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
         value = immediate_to_bits(line[3])
         write_bits(value)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
 
     elif line[0] == "fsub.d":
         # reg1 = reg2 - reg3  ~  fp
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "fmul.d":
         # reg1 = reg2 * reg3  ~  fp
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "flt.s":
         # reg1 = reg2 < reg3    (boolean result)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
     elif line[0] == "fgt.s":
         # reg1 = reg3 < reg2       (<=> flt.s reg1,reg3,reg2)
-        write_bits(opcode["flt.s"])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[3]])
-        write_bits(reg_dict[line[2]])
-        curr_address += len(opcode["flt.s"]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE["flt.s"])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[3]])
+        write_bits(REG_DICT[line[2]])
+        curr_address += len(OPCODE["flt.s"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "flw":
         # load 32 bits fp from mem address and store to reg
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
-        write_bits(reg_dict[reg])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + IMMEDIATE_SIZE + len(reg_dict[reg])
+        write_bits(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "sub":
         # reg1 = reg2 - reg3
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "bnez":
         # branch if reg is not equal to zero (could have been merged with bne but it is not implemented here)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
         address = search_addr_by_label(line[2], curr_address)
         write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "fadd.d":
         # reg1 = reg2 + reg3  ~  fp
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "fsqrt.d":
         # reg1 = sqrt(reg2)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]])
 
     elif line[0] == "bgt":
         # branch if reg1 is greater than reg2
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
         address = search_addr_by_label(line[3], curr_address)
         write_bits(address)
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + MEM_ADDRESS_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "fmv.s.x":
         # reg1 = reg2 (move from integer register to fp register)
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]])
 
     elif line[0] == "fmul.s":
         # reg1 = reg2 * reg3  ~  fp
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "fadd.s":
         # reg1 = reg2 + reg3  ~  fp
-        write_bits(opcode[line[0]])
-        write_bits(reg_dict[line[1]])
-        write_bits(reg_dict[line[2]])
-        write_bits(reg_dict[line[3]])
-        curr_address += len(opcode[line[0]]) + len(reg_dict[line[1]]) + len(reg_dict[line[2]]) + len(reg_dict[line[3]])
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
 # Write global variables in object file
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
+
+print(label_addresses)
 
 write_bits([0,0,0,0,0,0,0,0])   # flush bits that are still in the stack TODO only use 7 bits ??

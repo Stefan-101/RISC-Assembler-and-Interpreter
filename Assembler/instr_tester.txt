@@ -1,39 +1,37 @@
-.section .rodata
-enter_prompt: .asciz "Enter a, b, and c: "
-scan: .asciz "%d %d %d"
-result_out: .asciz "Result = %d\n"
-
 .section .text
-.global main
-main:
-    addi    sp, sp, -32     # Allocate 32 bytes from the stack
-    sd      ra, 0(sp)       # Since we are making calls, we need the original ra
-
-    # Prompt the user first
-    la      a0, enter_prompt 
-    call    printf
-
-    # We've printed the prompt, now wait for user input
-    la      a0, scan
-    addi    a1, sp, 8        # Address of a is sp + 8
-    addi    a2, sp, 16       # Address of b is sp + 16
-    addi    a3, sp, 24       # Address of c is sp + 24
-    call    scanf
-
-    # Now all of the values are in memory, load them
-    # so we can jal ra, the c function.
-    lw      a0, 8(sp)
-    lw      a1, 16(sp)
-    lw      a2, 24(sp)
-    call    cfunc
-
-    # The result should be in a0, but that needs to be
-    # the second parameter to printf.
-    mv      a1, a0
-    la      a0, result_out
-    call    printf
-
-    # Restore original RA and return
-    ld      ra, 0(sp)
-    addi    sp, sp, 32       # Always deallocate the stack!
-    ret
+.global bubsort
+bubsort:
+    # a0 = long *list
+    # a1 = size
+    # t0 = swapped
+    # t1 = i
+1: # do loop
+    li t0, 0          # swapped = false
+    li t1, 1          # i = 1
+2: # for loop
+    bge t1, a1, 2f    # break if i >= size
+    slli t3, t1, 3    # scale i by 8 (for long)
+    add t3, a0, t3    # new scaled memory address
+    ld  t4, -8(t3)    # load list[i-1] into t4
+    fld   ft0, 0(a0)      # ft0 = from.x
+    fld   ft1, 8(a0)      # ft1 = from.y
+    fld   ft2, 0(a1)      # ft2 = to.x
+    fld   ft3, 8(a1)      # ft3 = to.y
+    fsub.d  ft0, ft2, ft0 # ft0 = to.x - from.x
+    fsub.d  ft1, ft3, ft1 # ft1 = to.y - from.y
+    fmul.d  ft0, ft0, ft0 # ft0 = ft0 * ft0
+    fmul.d  ft1, ft1, ft1 # ft1 = ft1 * ft1
+    fadd.d  ft0, ft0, ft1 # ft0 = ft0 + ft1
+    fsqrt.d fa0, ft0      # fa0 = sqrt(ft0)
+    ld  t5, 0(t3)     # load list[i] into t5
+    ble t4, t5, 3f    # if list[i-1] < list[i], it's in position
+    # if we get here, we need to swap
+    li  t0, 1         # swapped = true
+    sd  t4, 0(t3)     # list[i] = list[i-1]
+    sd  t5, -8(t3)    # list[i-1] = list[i]
+3: # bottom of for loop body
+    addi t1, t1, 1    # i++
+    j    2b           # loop again
+2: # bottom of do loop body
+    bnez t0, 1b       # loop if swapped = true
+    ret               # return via return address register
