@@ -91,7 +91,7 @@ bit_queue = []
 def write_bits(bits_arr):
     global bit_queue
     bit_queue.extend(bits_arr)
-    while len(bit_queue) >=8 :
+    while len(bit_queue) >= 8 :
         byte = 0
         for i in range(8):
             byte = byte << 1
