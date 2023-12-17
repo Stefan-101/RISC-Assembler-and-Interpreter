@@ -84,19 +84,19 @@ label_addresses = []    # list with labels and their addresses
 simulated_address = 0   # bit counter used to simulate addresses in process_labels function 
                         # also used as an offset for setting global variables addresses  (global variables 
                         # are written right after instructions)
-MEM_ADDRESS_SIZE = 16
+MEM_ADDRESS_SIZE = 16   # enough for 8 kB = 65536 bits of memory (each bit has its own address)
 IMMEDIATE_SIZE = 7      # our maximum value is 32 -> we only need 7 bits to represent that in 2's complement
 
-bit_stack = []
+bit_queue = []
 def write_bits(bits_arr):
-    global bit_stack
-    bit_stack.extend(bits_arr)
-    while len(bit_stack) >=8 :
+    global bit_queue
+    bit_queue.extend(bits_arr)
+    while len(bit_queue) >=8 :
         byte = 0
         for i in range(8):
             byte = byte << 1
-            byte = byte | bit_stack[0]
-            del bit_stack[0]
+            byte = byte | bit_queue[0]
+            del bit_queue[0]
         with open(bin_file_name, "ab") as binary_file:
             binary_file.write(bytearray([byte]))
 
@@ -207,7 +207,7 @@ def process_labels(file_name):
             simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
         elif line[0] == "call":
-            func_name_length = 8
+            func_name_length = 8                # DUMMY VALUE
             simulated_address += len(OPCODE[line[0]]) + func_name_length
             # TODO encode function name
 
@@ -281,9 +281,8 @@ for line in f:
                 if symbol_code == 92:
                     # special character (only \n is implemented below)
                     continue
-                if ord(var_arg[i-1]) == 92:
-                    if var_arg[i] == "n":
-                        symbol_code = 10        # newline
+                if ord(var_arg[i-1]) == 92 and var_arg[i] == "n":
+                    symbol_code = 10        # newline
 
                 binary_ascii = list(map(int,list(bin(symbol_code)[2:])))
                 binary_ascii[0:0] = [0]*(8-len(binary_ascii))
@@ -598,4 +597,4 @@ for line in f:
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
 
-write_bits([0,0,0,0,0,0,0,0])   # flush bits that are still in the stack TODO only use 7 bits ??
+write_bits([0]*7)   # flush bits that are still in the queue
