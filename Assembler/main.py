@@ -598,3 +598,5 @@ curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
 
 write_bits([0]*7)   # flush bits that are still in the queue
+
+f.close()
