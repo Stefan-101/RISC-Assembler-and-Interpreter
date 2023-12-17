@@ -115,10 +115,21 @@ def immediate_to_bits(string):
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
     return bin_arr
 
+# search_addr_by_label searches the address of a label in the specified direction (f/b)
+# returns a 16 bit array with the memory address of the first occourance found
 def search_addr_by_label(label, curr_addr):
-    # TODO implementation (after process_labels is implemented)
-    # return dummy value for now    
-    return [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    direction = label[-1]
+    label = label[:-1]
+    if direction == "f":
+        for elem in label_addresses:
+            if elem[0] == label and elem[1] > curr_addr:
+                return addr_to_bits(elem[1])
+    else:
+        for i in range(len(label_addresses)-1,-1,-1):
+            if label_addresses[i][0] == label and label_addresses[i][1] <= curr_addr:
+                return addr_to_bits(label_addresses[i][1]) 
+
+    print("something wrong happened")
 
 #   addr_to_bits transforms an integer (an address) into a 16 bit array (mem_addr_size)
 def addr_to_bits(addr):
@@ -586,7 +597,5 @@ for line in f:
 # Write global variables in object file
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
-
-print(label_addresses)
 
 write_bits([0,0,0,0,0,0,0,0])   # flush bits that are still in the stack TODO only use 7 bits ??
