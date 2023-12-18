@@ -1,3 +1,11 @@
+# RISC-V Assembler
+#
+# This program assembles RISC-V instructions into a binary file
+#
+# ISA and other design choices based on these specific input files (not all RISC-V instructions are implemented)
+#
+# Inputs are assumed to be correct (error checking is lacking)
+
 import re
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
@@ -228,7 +236,7 @@ def process_labels(file_name):
 
 # I/O Files
 bin_file_name = "temp.o"
-code_file_name = "instr_tester.txt"
+code_file_name = "instr_tester.s"
 
 # NOTE TEMP - deletes output file if it exists before writing
 temp = open(bin_file_name,"w")
@@ -326,7 +334,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
-        # ret will end the execution for our functions
+        # ret will end the execution of our functions
         write_bits(OPCODE[line[0]])
         curr_address += len(OPCODE[line[0]])
 
