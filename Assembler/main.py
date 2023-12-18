@@ -235,8 +235,8 @@ def process_labels(file_name):
     f.close()
 
 # I/O Files
-bin_file_name = "temp.o"
 code_file_name = "instr_tester.s"
+bin_file_name = "temp.o"
 
 # NOTE TEMP - deletes output file if it exists before writing
 temp = open(bin_file_name,"w")
