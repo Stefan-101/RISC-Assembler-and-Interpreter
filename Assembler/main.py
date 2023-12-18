@@ -238,9 +238,8 @@ def process_labels(file_name):
 code_file_name = "instr_tester.s"
 bin_file_name = "temp.o"
 
-# NOTE TEMP - deletes output file if it exists before writing
-temp = open(bin_file_name,"w")
-temp.close()
+# clears output file before writing
+open(bin_file_name,"w").close()
 
 # process labels
 process_labels(code_file_name)
@@ -601,7 +600,7 @@ for line in f:
         write_bits(REG_DICT[line[3]])
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
-# Write global variables in object file
+# write global variables in object file
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
 
