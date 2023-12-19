@@ -109,7 +109,6 @@ def write_bits(bits_arr):
             binary_file.write(bytearray([byte]))
 
 # immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
-# NOTE What size are the registers ??? !!!
 def immediate_to_bits(string):
     num = int(string)
 
@@ -162,7 +161,7 @@ def process_labels(file_name):
         # remove comments from instructions
         line = line.split("#")[0].rstrip()
         
-        # set section
+        # set section (only read only data section is implemented)
         if line == ".section .rodata":
             current_section = 1
             continue
@@ -262,7 +261,7 @@ for line in f:
     # remove comments from instructions
     line = line.split("#")[0].rstrip()
     
-    # set section
+    # set section (only read only data section is implemented)
     if line == ".section .rodata":
         current_section = 1
         continue
@@ -273,8 +272,9 @@ for line in f:
         # skip line (execution starts at address 0 no matter what)
         continue
 
-    if current_section == 1:        # data section ~ save global variables
+    if current_section == 1:        # data section ~ save global constants
         # Note: only works with .rodata at the start of the code (may work in other cases too ??)
+        # The following format is expected: <var_name>: <var_type> <value> (exactly one space)
         var_name = line[:line.find(":")]
         var_type = line[line.find("."):].split()[0]
         var_arg = line[line.find(var_type)+len(var_type)+1:]
@@ -299,7 +299,7 @@ for line in f:
             glb_var_bits.extend([0,0,0,0,0,0,0,0])      # null asciz terminator
             temp_var_addr += 8
             
-        # other variable types are not implemented
+        # other data types are not implemented
         continue
 
     if (line[-1] == ":"):
@@ -378,7 +378,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "sd":
-        # store 64 bits (????) from reg to mem  !!!
+        # store 64 bits from reg to mem
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -427,7 +427,7 @@ for line in f:
         # TODO encode function name
 
     elif line[0] == "ld":
-        # load 64 bits (???) from mem address and store to reg
+        # load 64 bits from mem address and store to reg
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -438,7 +438,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "lw":
-        # load 32 bits from mem address, sign extend the value (???) and store to reg
+        # load 32 bits from mem address, sign extend the value and store to reg
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -449,7 +449,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "fld":
-        # load 64 bits (???) from mem address and store to reg (fp)
+        # load 64 bits from mem address and store to reg (fp)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
