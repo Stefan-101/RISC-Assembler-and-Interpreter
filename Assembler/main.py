@@ -156,10 +156,10 @@ def search_addr_by_label(label, curr_addr):
 
 #   addr_to_bits transforms an integer (an address) into a 16 bit array (mem_addr_size)
 def addr_to_bits(addr):
-    bin_val = bin(addr)
-    bin_arr = [0]*(MEM_ADDRESS_SIZE-len(bin_val)+2)
-    bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
-    return bin_arr
+    if addr < 0:
+        print("address must be positive")
+        return None
+    return [int(bit) for bit in bin(addr)[2:].zfill(16)]
 
 # process_labels creates a list with addresses of labels used in the code by passing once through all instructions
 # this list is sorted by default in ascending order
@@ -230,9 +230,7 @@ def process_labels(file_name):
             simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
         elif line[0] == "call":
-            func_name_length = 8                # DUMMY VALUE
-            simulated_address += len(OPCODE[line[0]]) + func_name_length
-            # TODO encode function name
+            simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
         elif (line[0] == "fsub.d" or line[0] == "fmul.d" or line[0] == "sub" 
               or line[0] == "fmul.s" or line[0] == "fadd.s" or line[0] == "fadd.d"):
@@ -260,7 +258,8 @@ open(bin_file_name,"w").close()
 
 # Link machine code from other obj files
 # expected format: label table, text section   (extern variables are not implemented here) 
-# label table ends with a special row, for our example, cfunc.h will be transformed as follows (in binary of course):
+# label table is sorted and ends with a special row 
+# for our example, cfunc.h will be transformed as follows (in binary of course):
 # label table: [["cfunc",16_bit_mem_addr],[0]]; text section: mul a1,a1,a2; add a0,a0,a1; ret
 
 if linked_obj_files != "":
@@ -481,13 +480,16 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "call":
-        # could be expanded, but instructions from expansion are not implemented (will be hardcoded in the interpreter)
+        # could be expanded, but will be hardcoded in the interpreter
         write_bits(OPCODE[line[0]])
-        func_name = line[1]
-        write_bits([1,1,1,1,1,1,1,1])   # DUMMY value
-        func_name_length = 8
-        curr_address += len(OPCODE[line[0]]) + func_name_length
-        # TODO encode function name
+        call_addr = -1
+        # TODO handle printf, scanf, strlen
+        for elem in label_addresses:
+            if line[1] == elem[0]:
+                call_addr = elem[1]
+                break
+        write_bits(addr_to_bits(call_addr))
+        curr_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
     elif line[0] == "ld":
         # load 64 bits from mem address and store to reg
