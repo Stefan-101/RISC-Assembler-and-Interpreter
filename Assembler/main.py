@@ -5,6 +5,23 @@
 # ISA and other design choices based on these specific input files (not all RISC-V instructions are implemented)
 #
 # Inputs are assumed to be correct (error checking is lacking)
+#
+# = Structure of the output file = 
+#
+#   |-----------------------|
+#   |  variables/constants  |
+#   |   declared in data    |
+#   |       section         |
+#   |-----------------------|
+#   | machine code computed |
+#   |    from .s file       |
+#   |-----------------------|
+#   |   machine code from   |
+#   |   linked obj files    |
+#   |-----------------------|
+#   |    entry_point_addr   | <- start of the binary output file
+#   |-----------------------|
+
 
 import re
 
@@ -87,7 +104,8 @@ REG_DICT = {"t0": [1, 1, 1],
             # long encodings occour due to some registers not being used at all in our 12 functions
 
 label_addresses = []    # list with labels and their addresses
-simulated_address = 0   # bit counter used to simulate addresses in process_labels function 
+curr_address = 16       # bit counter used in real instruction processing (starts with 16 since an entry point addr will be added)
+simulated_address = 16  # bit counter used to simulate addresses in process_labels function (starts with 16 for the same reason)
                         # also used as an offset for setting global variables addresses  (global variables 
                         # are written right after instructions)
 MEM_ADDRESS_SIZE = 16   # enough for 8 kB = 65536 bits of memory (each bit has its own address)
@@ -234,11 +252,56 @@ def process_labels(file_name):
 # I/O Files
 # TODO read these from cmd line
 code_file_name = "instr_tester.s"
-linked_obj_files = ""
+linked_obj_files = "cfunc.o"
 bin_file_name = "temp.o"
 
 # clears output file before writing
 open(bin_file_name,"w").close()
+
+# Link machine code from other obj files
+# expected format: label table, text section   (extern variables are not implemented here) 
+# label table ends with a special row, for our example, cfunc.h will be transformed as follows (in binary of course):
+# label table: [["cfunc",16_bit_mem_addr],[0]]; text section: mul a1,a1,a2; add a0,a0,a1; ret
+
+if linked_obj_files != "":
+    linked_obj_files = re.split("[ ,]+", linked_obj_files)
+    for file in linked_obj_files:
+        # fetch label table
+        file = open(file, "rb")
+        bit_pointer = 0
+        fetched_labels = []
+        label_curr_str = []
+        label_mem_addr = 0
+        while byte := file.read(1):
+            bit_pointer += 8
+            if label_curr_str == [] and label_mem_addr == 0 and byte == b'\x00':
+                # if we encounter [0], the whole table has been fetched
+                break
+            if byte != b'\x00':
+                # read ascii char
+                label_curr_str.append(chr(int.from_bytes(byte)))
+            else:
+                # if we reach the end of the label name, fetch 2 bytes 
+                # (the memory address the label points to in the original obj file) and store them
+                byte = file.read(2)
+                bit_pointer += 8*2
+                label_mem_addr = int.from_bytes(byte)
+                fetched_labels.append((''.join(label_curr_str),label_mem_addr))
+                label_curr_str = []
+                label_mem_addr = 0
+
+        # copy the rest of the binary
+        while byte := file.read(1):
+            if fetched_labels != [] and bit_pointer == fetched_labels[0][1]:
+                label_addresses.append((fetched_labels[0][0],curr_address))
+                del fetched_labels[0]
+            with open(bin_file_name, "ab") as binary_file:
+                binary_file.write(byte)
+            curr_address += 8
+            simulated_address += 8
+            bit_pointer += 8
+        
+        file.close()
 
 # process labels
 process_labels(code_file_name)
@@ -246,10 +309,10 @@ process_labels(code_file_name)
 f = open(code_file_name)
 
 current_section = 0         # data/text sections
-curr_address = 0            # current bit address
 glb_var = {}                # dictionary with global variable addresses
 glb_var_bits = []           # retains global variables in binary so they can be added after the text section
 temp_var_addr = 0           # used to calculate global variable addresses
+entry_label = ""            # saves the entry label
 for line in f:
     line = line.lstrip().rstrip()
 
@@ -269,7 +332,7 @@ for line in f:
         current_section = 2
         continue
     elif ".global" in line:
-        # skip line (execution starts at address 0 no matter what)
+        entry_label = line.split()[1]
         continue
 
     if current_section == 1:        # data section ~ save global constants
@@ -603,6 +666,16 @@ for line in f:
 # write global variables in object file
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
+
+# Insert entry point address at the start of the file (should be fine with small file sizes)
+with open(bin_file_name,"rb") as original:
+    existing_content = original.read()
+with open(bin_file_name,"wb") as output:
+    for elem in label_addresses:
+        if entry_label == elem[0]:
+            output.write(elem[1].to_bytes(4))
+with open(bin_file_name,"ab") as output:
+    output.write(existing_content)
 
 write_bits([0]*7)   # flush bits that are still in the queue
 
