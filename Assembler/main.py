@@ -9,17 +9,15 @@
 import re
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
-OPCODE = {"addi": [1, 1, 0], "add": [0, 1, 0], "j": [1, 1, 1, 1], 
-          "ret": [1, 0, 1, 1], "li": [1, 0, 1, 0], "bge": [1, 0, 0, 0], 
-          "beqz": [0, 0, 0, 0], "fmv.s": [1, 1, 1, 0, 0], "sd": [1, 0, 0, 1, 1], 
-          "call": [0, 1, 1, 1, 1], "sb": [0, 1, 1, 1, 0], "lw": [0, 1, 1, 0, 1], 
-          "ld": [0, 1, 1, 0, 0], "lb": [0, 0, 1, 1, 1], "flt.s": [0, 0, 1, 1, 0], 
-          "fld": [0, 0, 0, 1, 1], "la": [1, 1, 1, 0, 1, 0], "fsw": [1, 0, 0, 1, 0, 1], 
-          "slli": [1, 0, 0, 1, 0, 0], "flw": [1, 1, 1, 0, 1, 1, 1], "fmul.d": [1, 1, 1, 0, 1, 1, 0], 
-          "fsub.d": [0, 0, 1, 0, 0, 1], "srai": [0, 0, 1, 0, 0, 0], "bnez": [0, 0, 1, 0, 1, 1, 1], 
-          "sub": [0, 0, 1, 0, 1, 1, 0], "fsqrt.d": [0, 0, 1, 0, 1, 0, 1], "fadd.d": [0, 0, 1, 0, 1, 0, 0], 
-          "fmv.s.x": [0, 0, 0, 1, 0, 1, 1], "bgt": [0, 0, 0, 1, 0, 1, 0], "fadd.s": [0, 0, 0, 1, 0, 0, 1], 
-          "fmul.s": [0, 0, 0, 1, 0, 0, 0]}
+OPCODE = {"addi": [1, 1, 0], "add": [0, 0, 1], "j": [1, 1, 1, 1], "ret": [1, 0, 1, 1], 
+          "li": [1, 0, 1, 0], "bge": [1, 0, 0, 0], "beqz": [1, 1, 1, 0, 1], "fmv.s": [1, 1, 1, 0, 0], 
+          "sd": [1, 0, 0, 1, 1], "lb": [0, 1, 1, 1, 1], "call": [0, 1, 1, 0, 1], "sb": [0, 1, 1, 0, 0], 
+          "lw": [0, 1, 0, 1, 1], "ld": [0, 1, 0, 1, 0], "flt.s": [0, 0, 0, 1, 1], "fld": [0, 0, 0, 1, 0], 
+          "la": [1, 0, 0, 1, 0, 1], "fsw": [1, 0, 0, 1, 0, 0], "slli": [0, 1, 1, 1, 0, 1], "flw": [0, 1, 1, 1, 0, 0], 
+          "srai": [0, 1, 0, 0, 0, 1], "fmul.d": [0, 0, 0, 0, 1, 1], "fsub.d": [0, 0, 0, 0, 1, 0], 
+          "fsqrt.d": [0, 1, 0, 0, 1, 1, 1], "fadd.d": [0, 1, 0, 0, 1, 1, 0], "fmv.s.x": [0, 1, 0, 0, 1, 0, 1], 
+          "bgt": [0, 1, 0, 0, 1, 0, 0], "bnez": [0, 1, 0, 0, 0, 0, 1], "sub": [0, 1, 0, 0, 0, 0, 0], 
+          "fadd.s": [0, 0, 0, 0, 0, 1, 1], "fmul.s": [0, 0, 0, 0, 0, 1, 0], "mul": [0, 0, 0, 0, 0, 0]}
 
 # Register codes dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
 REG_DICT = {"t0": [1, 1, 1], 
@@ -234,7 +232,9 @@ def process_labels(file_name):
     f.close()
 
 # I/O Files
+# TODO read these from cmd line
 code_file_name = "instr_tester.s"
+linked_obj_files = ""
 bin_file_name = "temp.o"
 
 # clears output file before writing
@@ -333,7 +333,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
-        # ret will end the execution of our functions
+        # ret jumps to the address in ra register
         write_bits(OPCODE[line[0]])
         curr_address += len(OPCODE[line[0]])
 
