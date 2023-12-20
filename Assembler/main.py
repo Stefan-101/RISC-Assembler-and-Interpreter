@@ -684,6 +684,7 @@ with open(bin_file_name,"wb") as output:
     for elem in label_addresses:
         if entry_label == elem[0]:
             output.write(elem[1].to_bytes(2))
+            break
 with open(bin_file_name,"ab") as output:
     output.write(existing_content)
 
