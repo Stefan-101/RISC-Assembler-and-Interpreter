@@ -111,7 +111,7 @@ simulated_address = 16  # bit counter used to simulate addresses in process_labe
                         # also used as an offset for setting global variables addresses  (global variables 
                         # are written right after instructions)
 MEM_ADDRESS_SIZE = 16   # enough for 8 kB = 65536 bits of memory (each bit has its own address)
-IMMEDIATE_SIZE = 7      # our maximum value is 32 -> we only need 7 bits to represent that in 2's complement
+IMMEDIATE_SIZE = 32     # instructions with immediates that can not be represented in 32 bits are expanded
 
 bit_queue = []
 def write_bits(bits_arr):
@@ -138,7 +138,11 @@ def immediate_to_bits(string):
         bin_val = bin(abs(num)-1)
         bin_arr = bin_arr = [1]*(IMMEDIATE_SIZE-len(bin_val)+2)
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
-    return bin_arr
+    if len(bin_arr) <= 32:
+        return bin_arr
+    else:
+        print("something went wrong")
+        return None
 
 # search_addr_by_label searches the address of a label in the specified direction (f/b)
 # returns a 16 bit array with the memory address of the first occourance found
@@ -161,7 +165,7 @@ def addr_to_bits(addr):
     if addr < 0:
         print("address must be positive")
         return None
-    return [int(bit) for bit in bin(addr)[2:].zfill(16)]
+    return [int(bit) for bit in bin(addr)[2:].zfill(MEM_ADDRESS_SIZE)]
 
 # process_labels creates a list with addresses of labels used in the code by passing once through all instructions
 # this list is sorted by default in ascending order
@@ -374,7 +378,7 @@ for line in f:
     line = re.split("[ ,]+",line)
     line[0]=line[0].lower()
     if line[0] == "addi":
-        # addi: reg1 = reg2 + immediate (sign extended)
+        # addi: reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
@@ -390,10 +394,46 @@ for line in f:
 
     elif line[0] == "li":
         # load immediate into reg
-        write_bits(OPCODE[line[0]])
-        write_bits(REG_DICT[line[1]])
-        write_bits(immediate_to_bits(line[2]))
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+        immediate_val = int(line[2])
+        if -2147483648 <= immediate_val <= 2147483647:
+            # can be represented in 32 bits
+            write_bits(OPCODE[line[0]])
+            write_bits(REG_DICT[line[1]])
+            write_bits(immediate_to_bits(line[2]))
+            curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+        else:
+            # can not be represented in 32 bits, the instruction will be expanded
+            upper_32_bits = (immediate_val & 0xFFFFFFFF00000000) >> 32
+            lower_32_bits = immediate_val & 0xFFFFFFFF
+
+            # load upper 32 bits
+            write_bits(OPCODE["li"])
+            write_bits(REG_DICT[line[1]])
+            write_bits(immediate_to_bits(str(upper_32_bits)))
+            curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+
+            # shift the value to its place (32 bits to the left)
+            write_bits(OPCODE["slli"])
+            write_bits(REG_DICT[line[1]])
+            write_bits(REG_DICT[line[1]])
+            value = immediate_to_bits("32")
+            write_bits(value)
+            curr_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+
+            # add the lower 32 bits in 2 steps to avoid sign extension
+            # if MSB is not zero, the sign extended value will change the upper bits
+            # (strange design but it makes use of already existing instructions from our 12 functions)
+            write_bits(OPCODE["addi"])
+            write_bits(REG_DICT[line[1]])
+            write_bits(REG_DICT[line[1]])
+            write_bits(immediate_to_bits(str(lower_32_bits//2)))
+            curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+
+            write_bits(OPCODE["addi"])
+            write_bits(REG_DICT[line[1]])
+            write_bits(REG_DICT[line[1]])
+            write_bits(immediate_to_bits(str(lower_32_bits//2 + lower_32_bits%2)))
+            curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
         # ret jumps to the address in ra register
@@ -442,6 +482,8 @@ for line in f:
 
     elif line[0] == "sd":
         # store 64 bits from reg to mem
+        # TODO reduce to 16 bits offset 
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -460,6 +502,7 @@ for line in f:
 
     elif line[0] == "lb":
         # load 8 bits from mem address, sign extend the value and store to reg
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -471,6 +514,7 @@ for line in f:
 
     elif line[0] == "sb":
         # store 8 bits from reg to mem
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -512,6 +556,7 @@ for line in f:
 
     elif line[0] == "lw":
         # load 32 bits from mem address, sign extend the value and store to reg
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -523,6 +568,7 @@ for line in f:
 
     elif line[0] == "fld":
         # load 64 bits from mem address and store to reg (fp)
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -543,6 +589,7 @@ for line in f:
 
     elif line[0] == "fsw":
         # store 32 bit fp to memory address
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
@@ -601,6 +648,7 @@ for line in f:
 
     elif line[0] == "flw":
         # load 32 bits fp from mem address and store to reg
+        # offset has to fit in 32 bits (2's complement representation)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         offset = immediate_to_bits(line[2].split("(")[0])
