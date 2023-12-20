@@ -6,6 +6,8 @@
 #
 # Inputs are assumed to be correct (error checking is lacking)
 #
+# Running the script: python3.11 main.py <source_code> <objFiles> <output>
+#
 # = Structure of the output file = 
 #
 #   |-----------------------|
@@ -22,7 +24,7 @@
 #   |    entry_point_addr   | <- start of the binary output file
 #   |-----------------------|
 
-
+import sys
 import re
 
 # OPCODES dictionary ~ encoded using huffman coding (frequencies based on our 12 functions)
@@ -248,10 +250,9 @@ def process_labels(file_name):
     f.close()
 
 # I/O Files
-# TODO read these from cmd line
-code_file_name = "instr_tester.s"
-linked_obj_files = "cfunc.o"
-bin_file_name = "temp.o"
+code_file_name = sys.argv[1]
+linked_obj_files = sys.argv[2:-1]
+bin_file_name = sys.argv[-1]
 
 # clears output file before writing
 open(bin_file_name,"w").close()
@@ -262,7 +263,7 @@ open(bin_file_name,"w").close()
 # for our example, cfunc.h will be transformed as follows (in binary of course):
 # label table: [["cfunc",16_bit_mem_addr],[0]]; text section: mul a1,a1,a2; add a0,a0,a1; ret
 
-if linked_obj_files != "":
+if linked_obj_files != []:
     linked_obj_files = re.split("[ ,]+", linked_obj_files)
     for file in linked_obj_files:
         # fetch label table
