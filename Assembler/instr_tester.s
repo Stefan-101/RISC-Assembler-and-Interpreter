@@ -11,6 +11,7 @@ main:
 
     # Prompt the user first
     la      a0, enter_prompt 
+BP1:
     call    printf
 
     # We've printed the prompt, now wait for user input

@@ -480,10 +480,17 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "call":
-        # could be expanded, but will be hardcoded in the interpreter
+        # usual call behavior (which is hardcoded in the interpreter)
+        # calls to mem addresses 65533, 65534, 65535 are reserved for strlen, scanf and printf
+        # these mem addresses are still usable for read/write operations, just not for calls
         write_bits(OPCODE[line[0]])
         call_addr = -1
-        # TODO handle printf, scanf, strlen
+        if line[1] == "printf":
+            call_addr = 65535
+        elif line[1] == "scanf":
+            call_addr = 65534
+        elif line[1] == "strlen":
+            call_addr = 65533
         for elem in label_addresses:
             if line[1] == elem[0]:
                 call_addr = elem[1]
@@ -675,7 +682,7 @@ with open(bin_file_name,"rb") as original:
 with open(bin_file_name,"wb") as output:
     for elem in label_addresses:
         if entry_label == elem[0]:
-            output.write(elem[1].to_bytes(4))
+            output.write(elem[1].to_bytes(2))
 with open(bin_file_name,"ab") as output:
     output.write(existing_content)
 
