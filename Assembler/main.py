@@ -126,19 +126,19 @@ def write_bits(bits_arr):
         with open(bin_file_name, "ab") as binary_file:
             binary_file.write(bytearray([byte]))
 
-# immediate_to_bits returns the binary representation of an integer given as a string (2's complement)
-def immediate_to_bits(string):
+# int_to_bit_arr returns the binary representation of an integer given as a string (2's complement)
+def int_to_bit_arr(string, size):
     num = int(string)
 
     if num >= 0:
         bin_val = bin(num)
-        bin_arr = [0]*(IMMEDIATE_SIZE-len(bin_val)+2)
+        bin_arr = [0]*(size-len(bin_val)+2)
         bin_arr.extend([int(bin_val[i]) for i in range(2,len(bin_val))])
     else:
         bin_val = bin(abs(num)-1)
-        bin_arr = bin_arr = [1]*(IMMEDIATE_SIZE-len(bin_val)+2)
+        bin_arr = bin_arr = [1]*(size-len(bin_val)+2)
         bin_arr.extend([~int(bin_val[i]) & 1 for i in range(2,len(bin_val))])
-    if len(bin_arr) <= 32:
+    if len(bin_arr) <= size:
         return bin_arr
     else:
         print("something went wrong")
@@ -206,14 +206,25 @@ def process_labels(file_name):
 
         line = re.split("[ ,]+",line)
         line[0]=line[0].lower()
-        if line[0] == "addi" or line[0] == "slli" or line[0] == "srai":
+        if line[0] == "addi":
             simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
+
+        elif line[0] == "slli" or line[0] == "srai":
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + 6
 
         elif line[0] == "j":
             simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
         elif line[0] == "li":
-            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+            # load immediate into reg
+            immediate_val = int(line[2])
+            if -2147483648 <= immediate_val <= 2147483647:
+                simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+            else:
+                simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+                simulated_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + 6
+                simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+                simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
         elif line[0] == "ret":
             simulated_address += len(OPCODE[line[0]])
@@ -233,7 +244,7 @@ def process_labels(file_name):
               or line[0] == "fsw" or line[0] == "flw"):
             reg = re.split("[()]+",line[2])
             reg = reg[1]
-            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
         elif line[0] == "call":
             simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
@@ -268,7 +279,6 @@ open(bin_file_name,"w").close()
 # label table: [["cfunc",16_bit_mem_addr],[0]]; text section: mul a1,a1,a2; add a0,a0,a1; ret
 
 if linked_obj_files != []:
-    linked_obj_files = re.split("[ ,]+", linked_obj_files)
     for file in linked_obj_files:
         # fetch label table
         file = open(file, "rb")
@@ -379,10 +389,11 @@ for line in f:
     line[0]=line[0].lower()
     if line[0] == "addi":
         # addi: reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
+        # the add instruction can be used for larger values
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
-        write_bits(immediate_to_bits(line[3]))
+        write_bits(int_to_bit_arr(line[3], IMMEDIATE_SIZE))
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
 
     elif line[0] == "j":
@@ -399,7 +410,7 @@ for line in f:
             # can be represented in 32 bits
             write_bits(OPCODE[line[0]])
             write_bits(REG_DICT[line[1]])
-            write_bits(immediate_to_bits(line[2]))
+            write_bits(int_to_bit_arr(line[2], IMMEDIATE_SIZE))
             curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
         else:
             # can not be represented in 32 bits, the instruction will be expanded
@@ -409,16 +420,16 @@ for line in f:
             # load upper 32 bits
             write_bits(OPCODE["li"])
             write_bits(REG_DICT[line[1]])
-            write_bits(immediate_to_bits(str(upper_32_bits)))
+            write_bits(int_to_bit_arr(str(upper_32_bits), IMMEDIATE_SIZE))
             curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
             # shift the value to its place (32 bits to the left)
             write_bits(OPCODE["slli"])
             write_bits(REG_DICT[line[1]])
             write_bits(REG_DICT[line[1]])
-            value = immediate_to_bits("32")
+            value = int_to_bit_arr("32", 6)
             write_bits(value)
-            curr_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+            curr_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + 6
 
             # add the lower 32 bits in 2 steps to avoid sign extension
             # if MSB is not zero, the sign extended value will change the upper bits
@@ -426,13 +437,13 @@ for line in f:
             write_bits(OPCODE["addi"])
             write_bits(REG_DICT[line[1]])
             write_bits(REG_DICT[line[1]])
-            write_bits(immediate_to_bits(str(lower_32_bits//2)))
+            write_bits(int_to_bit_arr(str(lower_32_bits//2), IMMEDIATE_SIZE))
             curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
             write_bits(OPCODE["addi"])
             write_bits(REG_DICT[line[1]])
             write_bits(REG_DICT[line[1]])
-            write_bits(immediate_to_bits(str(lower_32_bits//2 + lower_32_bits%2)))
+            write_bits(int_to_bit_arr(str(lower_32_bits//2 + lower_32_bits%2), IMMEDIATE_SIZE))
             curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
@@ -482,16 +493,15 @@ for line in f:
 
     elif line[0] == "sd":
         # store 64 bits from reg to mem
-        # TODO reduce to 16 bits offset 
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "fmv.s":
         # copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
@@ -502,27 +512,27 @@ for line in f:
 
     elif line[0] == "lb":
         # load 8 bits from mem address, sign extend the value and store to reg
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "sb":
         # store 8 bits from reg to mem
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "call":
         # usual call behavior (which is hardcoded in the interpreter)
@@ -545,59 +555,61 @@ for line in f:
 
     elif line[0] == "ld":
         # load 64 bits from mem address and store to reg
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "lw":
         # load 32 bits from mem address, sign extend the value and store to reg
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "fld":
         # load 64 bits from mem address and store to reg (fp)
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "slli":
         # logical left shift on reg2 by amount held in immediate and store to reg1
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
-        value = immediate_to_bits(line[3])
+        value = int_to_bit_arr(line[3], 6)  # 6 bits are enough to encode 64 values
+        print(value)
         write_bits(value)
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + 6
 
     elif line[0] == "fsw":
         # store 32 bit fp to memory address
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "la":
         # load address in register
@@ -611,9 +623,9 @@ for line in f:
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
-        value = immediate_to_bits(line[3])
+        value = int_to_bit_arr(line[3], 6)  # 6 bits are enough to encode 64 values
         write_bits(value)
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + IMMEDIATE_SIZE
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + 6
 
     elif line[0] == "fsub.d":
         # reg1 = reg2 - reg3  ~  fp
@@ -648,15 +660,15 @@ for line in f:
 
     elif line[0] == "flw":
         # load 32 bits fp from mem address and store to reg
-        # offset has to fit in 32 bits (2's complement representation)
+        # offset has to fit in 16 bits (2's complement)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
-        offset = immediate_to_bits(line[2].split("(")[0])
+        offset = int_to_bit_arr(line[2].split("(")[0], MEM_ADDRESS_SIZE)
         write_bits(offset)
         reg = re.split("[()]+",line[2])
         reg = reg[1]
         write_bits(REG_DICT[reg])
-        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE + len(REG_DICT[reg])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + MEM_ADDRESS_SIZE + len(REG_DICT[reg])
 
     elif line[0] == "sub":
         # reg1 = reg2 - reg3
