@@ -106,8 +106,8 @@ REG_DICT = {"t0": [1, 1, 1],
             # long encodings occour due to some registers not being used at all in our 12 functions
 
 label_addresses = []    # list with labels and their addresses
-curr_address = 16       # bit counter used in real instruction processing (starts with 16 since an entry point addr will be added)
-simulated_address = 16  # bit counter used to simulate addresses in process_labels function (starts with 16 for the same reason)
+curr_address = 0        # bit counter used in real instruction processing
+simulated_address = 0   # bit counter used to simulate addresses in process_labels function
                         # also used as an offset for setting global variables addresses  (global variables 
                         # are written right after instructions)
 MEM_ADDRESS_SIZE = 16   # enough for 8 kB = 65536 bits of memory (each bit has its own address)
@@ -431,6 +431,7 @@ for line in f:
             write_bits(value)
             curr_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + 6
 
+            # TODO might not work when lower_32_bits representation is [1]*32 (??)
             # add the lower 32 bits in 2 steps to avoid sign extension
             # if MSB is not zero, the sign extended value will change the upper bits
             # (strange design but it makes use of already existing instructions from our 12 functions)
