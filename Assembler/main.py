@@ -327,6 +327,8 @@ process_labels(code_file_name)
 
 f = open(code_file_name)
 
+# Start outputing machine code from instructions
+
 current_section = 0         # data/text sections
 glb_var = {}                # dictionary with global variable addresses
 glb_var_bits = []           # retains global variables in binary so they can be added after the text section
@@ -356,7 +358,7 @@ for line in f:
 
     if current_section == 1:        # data section ~ save global constants
         # Note: only works with .rodata at the start of the code (may work in other cases too ??)
-        # The following format is expected: <var_name>: <var_type> <value> (exactly one space)
+        # The following format is expected: <var_name>: <var_type> <value> (exactly one space to separate)
         var_name = line[:line.find(":")]
         var_type = line[line.find("."):].split()[0]
         var_arg = line[line.find(var_type)+len(var_type)+1:]
@@ -394,7 +396,7 @@ for line in f:
     line[0]=line[0].lower()
     if line[0] == "addi":
         # addi: reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
-        # the add instruction can be used for larger values
+        # the add instruction can be used for values larger than 32 bits (or a combination of addi instructions)
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
@@ -616,6 +618,7 @@ for line in f:
 
     elif line[0] == "slli":
         # logical left shift on reg2 by amount held in immediate and store to reg1
+        # immediate is an unsigned 6 bit value
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
@@ -645,6 +648,7 @@ for line in f:
 
     elif line[0] == "srai":
         # arithmetic right shift on reg2 by amount held in immediate and store to reg1
+        # immediate is an unsigned 6 bit value
         write_bits(OPCODE[line[0]])
         write_bits(REG_DICT[line[1]])
         write_bits(REG_DICT[line[2]])
