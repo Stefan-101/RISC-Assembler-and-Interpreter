@@ -413,11 +413,13 @@ for line in f:
             write_bits(int_to_bit_arr(line[2], IMMEDIATE_SIZE))
             curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
         else:
-            # can not be represented in 32 bits, the instruction will be expanded
+            # values from our 12 functions never reach this else branch  
+            # immediate_val can not be represented in 32 bits, the instruction will be expanded
             upper_32_bits = (immediate_val & 0xFFFFFFFF00000000) >> 32
             lower_32_bits = immediate_val & 0xFFFFFFFF
 
             # load upper 32 bits
+            # we do not care if the value is sign extended since we are going to shift it to the left
             write_bits(OPCODE["li"])
             write_bits(REG_DICT[line[1]])
             write_bits(int_to_bit_arr(str(upper_32_bits), IMMEDIATE_SIZE))
@@ -431,21 +433,38 @@ for line in f:
             write_bits(value)
             curr_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + 6
 
-            # TODO might not work when lower_32_bits representation is [1]*32 (??)
-            # add the lower 32 bits in 2 steps to avoid sign extension
-            # if MSB is not zero, the sign extended value will change the upper bits
-            # (strange design but it makes use of already existing instructions from our 12 functions)
+            # add the lower 32 bits in multiple steps to avoid sign extension from the addi instruction
+            # we try adding x/2 + x/2 + x%2 (= x) to avoid that
+            # otherwise, if MSB is not zero, the sign extended value will change the upper bits
+            # (strange and inefficient design but it makes use of already existing instructions from our 12 functions)
             write_bits(OPCODE["addi"])
             write_bits(REG_DICT[line[1]])
             write_bits(REG_DICT[line[1]])
             write_bits(int_to_bit_arr(str(lower_32_bits//2), IMMEDIATE_SIZE))
             curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
-            write_bits(OPCODE["addi"])
-            write_bits(REG_DICT[line[1]])
-            write_bits(REG_DICT[line[1]])
-            write_bits(int_to_bit_arr(str(lower_32_bits//2 + lower_32_bits%2), IMMEDIATE_SIZE))
-            curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+            if lower_32_bits != 4294967295:
+                # we can add lower_32_bits//2 + lower_32_bits%2 in one addi instruction
+                write_bits(OPCODE["addi"])
+                write_bits(REG_DICT[line[1]])
+                write_bits(REG_DICT[line[1]])
+                write_bits(int_to_bit_arr(str(lower_32_bits//2 + lower_32_bits%2), IMMEDIATE_SIZE))
+                curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+            else:
+                # the value 2147483647 has the first 31 bits set, so we can not add the modulus in the same addi instruction
+                # 2147483647 + 1 = 2^31 (32nd bit would be set)
+                # we add the modulus in a separate addi instruction
+                write_bits(OPCODE["addi"])
+                write_bits(REG_DICT[line[1]])
+                write_bits(REG_DICT[line[1]])
+                write_bits(int_to_bit_arr("2147483647", IMMEDIATE_SIZE))    # 4294967295/2 = 2147483647.5
+                curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+
+                write_bits(OPCODE["addi"])
+                write_bits(REG_DICT[line[1]])
+                write_bits(REG_DICT[line[1]])
+                write_bits(int_to_bit_arr("1", IMMEDIATE_SIZE))
+                curr_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
     elif line[0] == "ret":
         # ret jumps to the address in ra register
