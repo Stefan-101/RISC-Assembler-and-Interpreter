@@ -216,15 +216,20 @@ def process_labels(file_name):
             simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
 
         elif line[0] == "li":
-            # load immediate into reg
             immediate_val = int(line[2])
             if -2147483648 <= immediate_val <= 2147483647:
                 simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
             else:
+                lower_32_bits = immediate_val & 0xFFFFFFFF
                 simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
                 simulated_address += len(OPCODE["slli"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + 6
                 simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
-                simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+
+                if lower_32_bits != 4294967295:
+                    simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+                else:
+                    simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
+                    simulated_address += len(OPCODE["addi"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[1]]) + IMMEDIATE_SIZE
 
         elif line[0] == "ret":
             simulated_address += len(OPCODE[line[0]])

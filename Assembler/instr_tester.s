@@ -1,4 +1,4 @@
 .section .text
 .global main
 main:
-    li t0, 4294967294
+    li t0, 2002
