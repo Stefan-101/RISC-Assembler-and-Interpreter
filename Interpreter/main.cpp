@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdint>
 #include <unordered_map>
 using namespace std;
@@ -78,135 +79,155 @@ struct{
 // INSTRUCTION FUNCTIONS
 // all functions have the same signature even if not all parameters are used
 
-void addi(int64_t* REG1, int64_t* REG2, int64_t* /*unused*/, int32_t IMM){
+void addi(){
+    // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
+    // TODO fetch REG1, REG2, IMM
+}
+
+void add(){
+    // reg1 = reg2 + reg3
+    // TODO fetch REG1, REG2, REG3
+}
+
+void j(){
+    // sets instruction pointer to the memory address
+    //TODO fetch MEM_ADDR
+}
+
+void ret(){
+    // jump to the address in RA
+    reg.ip = reg.ra;
+}
+
+void li(){
+    // reg1 = imm
+    // TODO fetch reg1 and imm
+}
+
+void bge(){
+    // branch if reg1 is greater than or equal to reg2
+    // TODO fetch reg1, reg2, mem_addr
+}
+
+void beqz(){
+    // branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
+    // TODO fetch reg1, mem_addr
+}
+
+void fmv_s(){
+    // copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
+    // TODO fetch reg1, reg2
+}
+
+void sd(){
+    // store 64 bits from reg to mem ~ sd reg1, 4(reg2)
+    // TODO fetch reg1, reg2, offset
+}
+
+void lb(){
+    // load 8 bits from mem address, sign extend the value and store to reg
+    // TODO fetch reg1, reg2 offset
+}
+
+void call(){
+    // stores current ip + call_size + mem_addr_size and jumps to mem addr
+    // TODO fetch mem_addr (there are also predefined jumps)
+}
+
+void sb(){
+    // store 8 bits from reg to mem
+    // TODO fetch reg1, reg2, offset
+}
+
+void lw(){
+    // load 32 bits from mem address, sign extend the value and store to reg
+    // TODO fetch reg1, reg2, offset
+}
+
+void ld(){
+    // load 64 bits from mem address and store to reg
+    // TODO fetch reg1, reg2, offset
+}
+
+void flt_s(){
+    // reg1 = reg2 < reg3    (boolean result)
+    // TODO fetch reg1, reg2, reg3
+}
+
+void fld(){
+    // load 64 bits from mem address and store to reg (fp)
+    // TODO fetch reg1, reg2, offset
+}
+
+void la(){
+    // load address in register
+    // TODO fetch reg1, mem_addr
+}
+
+void fsw(){
+    // store 32 bit fp to memory address
+    // TODO fetch reg1, reg2, offset
+}
+
+void slli(){
+    // logical left shift on reg2 by amount held in immediate and store to reg1
+    // immediate is an unsigned 6 bit value
+    // TODO fetch reg1, reg2, imm
+}
+
+void flw(){
     return;
 }
 
-void add(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void srai(){
     return;
 }
 
-void j(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fmul_d(){
     return;
 }
 
-void ret(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fsub_d(){
     return;
 }
 
-void li(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fsqrt_d(){
     return;
 }
 
-void bge(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fadd_d(){
     return;
 }
 
-void beqz(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fmv_s_x(){
     return;
 }
 
-void fmv_s(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void bgt(){
     return;
 }
 
-void sd(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void bnez(){
     return;
 }
 
-void lb(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void sub(){
     return;
 }
 
-void call(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fadd_s(){
     return;
 }
 
-void sb(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void fmul_s(){
     return;
 }
 
-void lw(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
+void mul(){
     return;
 }
 
-void ld(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void flt_s(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fld(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void la(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fsw(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void slli(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void flw(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void srai(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fmul_d(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fsub_d(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fsqrt_d(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fadd_d(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fmv_s_x(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void bgt(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void bnez(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void sub(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fadd_s(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void fmul_s(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-void mul(int64_t* REG1, int64_t* REG2, int64_t* REG3, int32_t IMM){
-    return;
-}
-
-unordered_map<uint8_t, void(*)(int64_t*, int64_t*, int64_t*, int32_t)> opcode_map = {
+unordered_map<uint8_t, void(*)()> opcode_map = {
     // lookup table used to decode huffman codes
     // codes are padded with set bits to the left
 
@@ -275,11 +296,20 @@ int main(){
 
     // load entry point from binary file
 
-    // TODO ...
+    ifstream bin_exec("func_10", ios::binary);
 
-    // load binary file in memory buffer starting at 0
+    int16_t value;
+    bin_exec.read(reinterpret_cast<char*>(&value), sizeof(value));
+    reg.ip = int64_t(value);
 
-    // TODO ...
+    // load the rest of the file in buffer starting at position 0
+
+    bin_exec.seekg(0, ios::end);
+    streampos fileSize = bin_exec.tellg();
+    streampos bytesReadSoFar = sizeof(value);
+    streampos remainingSize = fileSize - bytesReadSoFar;
+    bin_exec.seekg(bytesReadSoFar, std::ios::beg);
+    bin_exec.read(buffer, remainingSize);
 
     // load registers and memory from file.in in buffer starting at ??
 
