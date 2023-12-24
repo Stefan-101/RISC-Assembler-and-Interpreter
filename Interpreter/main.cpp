@@ -308,7 +308,7 @@ int main(){
     streampos fileSize = bin_exec.tellg();
     streampos bytesReadSoFar = sizeof(value);
     streampos remainingSize = fileSize - bytesReadSoFar;
-    bin_exec.seekg(bytesReadSoFar, std::ios::beg);
+    bin_exec.seekg(bytesReadSoFar, ios::beg);
     bin_exec.read(buffer, remainingSize);
 
     // load registers and memory from file.in in buffer starting at ??
