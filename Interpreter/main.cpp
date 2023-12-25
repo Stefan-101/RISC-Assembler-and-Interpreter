@@ -2,9 +2,14 @@
 #include <fstream>
 #include <cstdint>
 #include <unordered_map>
+#include <string>
 using namespace std;
 
 char buffer[8191];  // 8kB binary buffer
+char current_byte;  // the current byte that is being worked on
+
+const int MEM_ADDR_SIZE = 16;
+const int IMMEDIATE_SIZE = 32;
 
 // CPU REGISTERS
 struct{
@@ -82,6 +87,8 @@ struct{
 void addi(){
     // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
     // TODO fetch REG1, REG2, IMM
+    // test
+    cout << "addi was called";
 }
 
 void add(){
@@ -122,6 +129,7 @@ void fmv_s(){
 void sd(){
     // store 64 bits from reg to mem ~ sd reg1, 4(reg2)
     // TODO fetch reg1, reg2, offset
+    cout << "sd has been called";
 }
 
 void lb(){
@@ -227,70 +235,101 @@ void mul(){
     return;
 }
 
-unordered_map<uint8_t, void(*)()> opcode_map = {
+unordered_map<string, void(*)()> opcode_map = {
     // lookup table used to decode huffman codes
-    // codes are padded with set bits to the left
+    // keys are string to make decoding easier
 
-    {254,  &addi},
-    {249,  &add},
-    {255,  &j},
-    {251,  &ret},
-    {250,  &li},
-    {248,  &bge},
-    {253,  &beqz},
-    {252,  &fmv_s},
-    {243,  &sd},
-    {239,  &lb},
-    {237,  &call},
-    {236,  &sb},
-    {235,  &lw},
-    {234,  &ld},
-    {227,  &flt_s},
-    {226,  &fld},
-    {229,  &la},
-    {228,  &fsw},
-    {221,  &slli},
-    {220,  &flw},
-    {209,  &srai},
-    {195,  &fmul_d},
-    {194,  &fsub_d},
-    {167,  &fsqrt_d},
-    {166,  &fadd_d},
-    {165,  &fmv_s_x},
-    {164,  &bgt},
-    {161,  &bnez},
-    {160,  &sub},
-    {131,  &fadd_s},
-    {130,  &fmul_s},
-    {192,  &mul}
+    {"110",  &addi},
+    {"001",  &add},
+    {"1111",  &j},
+    {"1011",  &ret},
+    {"1010",  &li},
+    {"1000",  &bge},
+    {"11101",  &beqz},
+    {"11100",  &fmv_s},
+    {"10011",  &sd},
+    {"01111",  &lb},
+    {"01101",  &call},
+    {"01100",  &sb},
+    {"01011",  &lw},
+    {"01010",  &ld},
+    {"00011",  &flt_s},
+    {"00010",  &fld},
+    {"100101",  &la},
+    {"100100",  &fsw},
+    {"011101",  &slli},
+    {"011100",  &flw},
+    {"010001",  &srai},
+    {"000011",  &fmul_d},
+    {"000010",  &fsub_d},
+    {"0100111",  &fsqrt_d},
+    {"0100110",  &fadd_d},
+    {"0100101",  &fmv_s_x},
+    {"0100100",  &bgt},
+    {"0100001",  &bnez},
+    {"0100000",  &sub},
+    {"0000011",  &fadd_s},
+    {"0000010",  &fmul_s},
+    {"000000",  &mul}
 };
 
-unordered_map<uint32_t, int64_t*> reg_map = {
+unordered_map<string, int64_t*> reg_map = {
     // lookup table used to decode huffman codes
-    // codes are padded with set bits to the left
+    // keys are string to make decoding easier
 
-    {4294967288, &reg.zero},
-    {4294967248, &reg.ra},
-    {4294967283, &reg.sp},
-    {4294967295, &reg.t0},
-    {4294967294, &reg.t1},
-    {4294967282, &reg.t2},
-    {4294967257, &reg.s1},
-    {4294967292, &reg.a0},
-    {4294967285, &reg.a1},
-    {4294967275, &reg.a2},
-    {4294967145, &reg.a3},
-    {4294967281, &reg.t3},
-    {4294967291, &reg.t4},
-    {4294967289, &reg.t5},
-    {4294967293, &reg.ft0},
-    {4294967290, &reg.ft1},
-    {4294967273, &reg.ft2},
-    {4294967209, &reg.ft3},
-    {4294967264, &reg.fa0},
-    {4294967280, &reg.fa1},
-    {4294967241, &reg.fa2}
+    {"0001", &reg.zero},
+    {"000010", &reg.ra},
+    {"1100", &reg.sp},
+    {"111", &reg.t0},
+    {"011", &reg.t1},
+    {"0100", &reg.t2},
+    {"100110", &reg.s1},
+    {"001", &reg.a0},
+    {"1010", &reg.a1},
+    {"11010", &reg.a2},
+    {"100101101", &reg.a3},
+    {"1000", &reg.t3},
+    {"11011", &reg.t4},
+    {"100111", &reg.t5},
+    {"1011", &reg.ft0},
+    {"0101", &reg.ft1},
+    {"10010111", &reg.ft2},
+    {"1001010", &reg.ft3},
+    {"00000", &reg.fa0},
+    {"000011", &reg.fa1},
+    {"100100", &reg.fa2}
 };
+
+// FETCH FUNCTIONS
+
+// fetch instruction
+void (*fetchInstr())(){
+    string opcode = "";
+    while (opcode_map.find(opcode) == opcode_map.end()){
+        // continue reading bits and searching for an opcode
+        if (!current_byte){
+            current_byte = buffer[reg.ip/8];
+        }
+        opcode += to_string((current_byte >> 7) & 1);
+        current_byte <<= 1;
+        reg.ip++;
+    }
+    return opcode_map.find(opcode) -> second;
+}
+
+// fetch register
+int64_t* fetchReg(){
+    string opcode = "";
+    while (reg_map.find(opcode) == reg_map.end()){
+        if (!current_byte){
+            current_byte = buffer[reg.ip/8];
+        }
+        opcode += to_string((current_byte >> 7) & 1);
+        current_byte <<= 1;
+        reg.ip++;
+    }
+    return reg_map.find(opcode) -> second;
+}
 
 int main(){
     // I/O files
@@ -339,9 +378,7 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
 
-    // TODO ...
-
-
+    current_byte = buffer[reg.ip/8];
 
 
     // STORE STATE
@@ -361,3 +398,5 @@ int main(){
     
     return 0;
 }
+
+// TODO check file opens
