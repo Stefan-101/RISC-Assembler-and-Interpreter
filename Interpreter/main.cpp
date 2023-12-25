@@ -305,15 +305,15 @@ int main(){
 
     ifstream bin_exec(executable_file, ios::binary);
 
-    int16_t value;
-    bin_exec.read(reinterpret_cast<char*>(&reg.ip), sizeof(value));
-    reg.ip = int64_t(value);
+    int16_t entryPoint;
+    bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
+    reg.ip = int64_t(entryPoint);
 
     // load the rest of the file in buffer starting at position 0
 
     bin_exec.seekg(0, ios::end);
     streampos fileSize = bin_exec.tellg();
-    streampos bytesReadSoFar = sizeof(value);
+    streampos bytesReadSoFar = sizeof(entryPoint);
     streampos remainingSize = fileSize - bytesReadSoFar;
     bin_exec.seekg(bytesReadSoFar, ios::beg);
     bin_exec.read(buffer, remainingSize);
