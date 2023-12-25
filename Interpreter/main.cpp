@@ -13,7 +13,7 @@ struct{
     int64_t t0;
     int64_t t1;
     int64_t a0;
-    int64_t sp;
+    int64_t sp = 8192;  // empty stack
     int64_t ft0;
     int64_t a1;
     int64_t t3;
@@ -293,13 +293,20 @@ unordered_map<uint32_t, int64_t*> reg_map = {
 };
 
 int main(){
+    // I/O files
+    char executable_file[] = "func_10";
+    char stateIn[] = "file.in";
+    char stateOut[] = "file.out";
 
+
+
+    // LOAD EXECUTABLE
     // load entry point from binary file
 
-    ifstream bin_exec("func_10", ios::binary);
+    ifstream bin_exec(executable_file, ios::binary);
 
     int16_t value;
-    bin_exec.read(reinterpret_cast<char*>(&value), sizeof(value));
+    bin_exec.read(reinterpret_cast<char*>(&reg.ip), sizeof(value));
     reg.ip = int64_t(value);
 
     // load the rest of the file in buffer starting at position 0
@@ -311,17 +318,46 @@ int main(){
     bin_exec.seekg(bytesReadSoFar, ios::beg);
     bin_exec.read(buffer, remainingSize);
 
-    // load registers and memory from file.in in buffer starting at ??
+    bin_exec.close();
+
+
+
+    // LOAD STATE
+    // load registers and memory in buffer
+
+    ifstream stateFileIn(stateIn, ios::binary);
+
+    stateFileIn.read(reinterpret_cast<char*>(&reg), sizeof(reg));
+
+    // we can use the stack pointer to calculate where to load the rest of the memory from the state file
+
+    stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1);
+
+    stateFileIn.close();
+
+
+
+    // EXECUTE INSTRUCTIONS
 
     // TODO ...
 
-    // Execute the instructions
 
-    // TODO ...
 
-    // output registers and memory from buffer in file.out
 
-    // TODO ...
+    // STORE STATE
+    // output registers and memory from buffer
+    // since our functions do not use variables (only constants) and there are no heap allocations,
+    // file.out will contain registers and the stack
 
+    ofstream stateFileOut(stateOut, ios::binary);
+
+    // write registers state
+    stateFileOut.write(reinterpret_cast<char*>(&reg), sizeof(reg));
+
+    // write the stack
+    stateFileOut.write(&buffer[reg.sp], 8191 - reg.sp + 1);      // stack_size = 8191 - reg.sp + 1
+
+    stateFileOut.close();
+    
     return 0;
 }

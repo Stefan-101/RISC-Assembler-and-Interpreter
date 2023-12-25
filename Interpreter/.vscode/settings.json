@@ -5,6 +5,8 @@
         "iostream": "cpp",
         "atomic": "cpp",
         "memory": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "istream": "cpp",
+        "xiosbase": "cpp"
     }
 }
