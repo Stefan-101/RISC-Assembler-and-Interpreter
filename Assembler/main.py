@@ -315,7 +315,7 @@ if linked_obj_files != []:
                 label_mem_addr = 0
 
         # copy the rest of the binary
-        while byte:
+        while byte := file.read(1):
             if fetched_labels != [] and bit_pointer == fetched_labels[0][1]:
                 label_addresses.append((fetched_labels[0][0],curr_address))
                 del fetched_labels[0]
@@ -324,8 +324,6 @@ if linked_obj_files != []:
             curr_address += 8
             simulated_address += 8
             bit_pointer += 8
-
-            byte = file.read(1)
         
         file.close()
 
