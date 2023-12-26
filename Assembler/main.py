@@ -266,6 +266,9 @@ def process_labels(file_name):
         elif line[0] == "bgt":
             simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + MEM_ADDRESS_SIZE
     
+    # allignment for global variables
+    simulated_address += 8 - simulated_address%8
+    
     f.close()
 
 # I/O Files
@@ -762,6 +765,7 @@ for line in f:
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
 # allignment for global variables
+curr_address += 8 - len(bit_queue)
 write_bits([0] * (8 - len(bit_queue)))
 
 # write global variables in object file
