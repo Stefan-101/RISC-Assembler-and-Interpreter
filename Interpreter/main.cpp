@@ -9,6 +9,7 @@ using namespace std;
 char buffer[8191];          // 8kB binary buffer
 int current_byte_index;     // index of the byte being processed
 int current_bit_index;      // index of the bit within the byte being processed
+// TODO ^ don't use auxiliary vars
 
 const int MEM_ADDR_SIZE = 16;
 const int IMMEDIATE_SIZE = 32;
@@ -119,7 +120,8 @@ void j(){
 }
 
 void ret(){
-    // jump to the address in RA
+    // jump to the address in RA or end execution if RA is -1
+    // TODO end execution if RA is -1
     cout << "SYS: ret has been called" << endl;
     reg.pc = reg.ra;
     current_byte_index = reg.pc / 8;    
@@ -439,7 +441,7 @@ int16_t fetchMemAddr(){
 int main(){
     // I/O files
     char executable_file[] = "test.o";
-    char stateIn[] = "file.out";
+    char stateIn[] = "blank_file.in";
     char stateOut[] = "file.out";
 
 
@@ -506,3 +508,4 @@ int main(){
 }
 
 // TODO check file opens
+// TODO conditional console SYS messages
