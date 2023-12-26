@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstring>
 #include <cstdint>
 #include <unordered_map>
 #include <string>
@@ -21,12 +22,12 @@ int16_t fetchMemAddr();
 
 // CPU REGISTERS
 struct{
-    int64_t pc = 0;     // program counter
+    int64_t pc = 0;     // program counter ~ points to bit address within the buffer
 
     int64_t t0;
     int64_t t1;
     int64_t a0;
-    int64_t sp = 8192;  // empty stack
+    int64_t sp = 8192;  // empty stack ~ points to byte address within the buffer
     int64_t ft0;
     int64_t a1;
     int64_t t3;
@@ -94,6 +95,7 @@ struct{
 
 void addi(){
     // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
+    cout << "SYS: addi has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int64_t imm = int64_t(fetchImm());
@@ -102,32 +104,53 @@ void addi(){
 
 void add(){
     // reg1 = reg2 + reg3
-    // TODO fetch REG1, REG2, REG3
+    cout << "SYS: add has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int64_t* reg3 = fetchReg();
+    *reg1 = *reg2 + *reg3;
 }
 
 void j(){
     // sets instruction pointer to the memory address
-    //TODO fetch MEM_ADDR
+    reg.pc = int64_t(fetchMemAddr());
+    current_byte_index = reg.pc / 8;    
+    current_bit_index = reg.pc % 8; 
 }
 
 void ret(){
     // jump to the address in RA
+    cout << "SYS: ret has been called" << endl;
     reg.pc = reg.ra;
+    current_byte_index = reg.pc / 8;    
+    current_bit_index = reg.pc % 8; 
+
 }
 
 void li(){
     // reg1 = imm
-    // TODO fetch reg1 and imm
+    cout << "SYS: li has been called " << endl;
+    int64_t* reg1 = fetchReg();
+    *reg1 = int64_t(fetchImm());
 }
 
 void bge(){
     // branch if reg1 is greater than or equal to reg2
-    // TODO fetch reg1, reg2, mem_addr
+    cout << "SYS: bge has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int16_t mem_addr = fetchMemAddr();
+    if (reg1 >= reg2)
+        reg.pc = int64_t(mem_addr);
 }
 
 void beqz(){
     // branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
-    // TODO fetch reg1, mem_addr
+    cout << "SYS: beqz has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t mem_addr = fetchMemAddr();
+    if (reg1 == 0)
+        reg.pc = int64_t(mem_addr);
 }
 
 void fmv_s(){
@@ -136,9 +159,13 @@ void fmv_s(){
 }
 
 void sd(){
-    // store 64 bits from reg to mem ~ sd reg1, 4(reg2)
-    // TODO fetch reg1, reg2, offset
-    cout << "sd has been called" << endl;
+    // store 64 bits from reg to mem ~ e.g. sd reg1, 4(reg2)
+    cout << "SYS: sd has been called " << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reinterpret_cast<int64_t*>(&buffer[*reg2 + offset]) = *reg1;       // *reg2 + offset can be considered a virtual address
+                                                                        // and &buffer[*reg2 + offset] its translation
 }
 
 void lb(){
@@ -147,8 +174,29 @@ void lb(){
 }
 
 void call(){
-    // stores current ip + call_size + mem_addr_size and jumps to mem addr
-    // TODO fetch mem_addr (there are also predefined jumps)
+    // stores current pc + call_size + mem_addr_size and jumps to mem addr
+    uint16_t mem_addr = uint16_t(fetchMemAddr());
+    switch (mem_addr){
+        case 65535:
+            cout << "SYS: branch printf was executed " << endl;
+            // printf only works with 5 integers (formats with %s won't work)
+            printf(&buffer[reg.a0], reg.a1, reg.a2, reg.a3, reg.a4, reg.a5);
+            break;
+        case 65534:
+            cout << "SYS: branch scanf was executed " << endl;
+            scanf(&buffer[reg.a0], &buffer[reg.a1], &buffer[reg.a2], &buffer[reg.a3], &buffer[reg.a4], &buffer[reg.a5]);
+            break;
+        case 65533:
+            cout << "SYS: branch strlen was executed " << endl;
+            reg.a0 = int64_t(strlen(&buffer[reg.a0]));
+            break;
+        default:
+            cout << "SYS: branch default was executed" << endl;
+            reg.ra = reg.pc;                    // save return address
+            reg.pc = int64_t(mem_addr);         // jump to memory_address
+            current_byte_index = reg.pc / 8;    
+            current_bit_index = reg.pc % 8;     
+    }
 }
 
 void sb(){
@@ -158,12 +206,20 @@ void sb(){
 
 void lw(){
     // load 32 bits from mem address, sign extend the value and store to reg
-    // TODO fetch reg1, reg2, offset
+    cout << "SYS: lw has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reg1 = int64_t(*reinterpret_cast<int32_t*>(&buffer[*reg2 + offset]));
 }
 
 void ld(){
     // load 64 bits from mem address and store to reg
-    // TODO fetch reg1, reg2, offset
+    cout << "SYS: ld has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reg1 = *reinterpret_cast<int64_t*>(&buffer[*reg2 + offset]);
 }
 
 void flt_s(){
@@ -178,8 +234,10 @@ void fld(){
 
 void la(){
     // load address in register
-    // TODO fetch reg1, mem_addr
-    cout << "la has been called" << endl;
+    cout << "SYS: la has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t mem_addr = fetchMemAddr();
+    *reg1 = int64_t(uint16_t(mem_addr)) / 8;    // transform bit address to byte address of variable in the buffer
 }
 
 void fsw(){
@@ -242,7 +300,12 @@ void fmul_s(){
 }
 
 void mul(){
-    return;
+    cout << "SYS: mul has been called" << endl;
+    // reg1 = reg2 * reg3
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int64_t* reg3 = fetchReg();
+    *reg1 = *reg2 * *reg3;
 }
 
 unordered_map<string, void(*)()> opcode_map = {
@@ -375,7 +438,7 @@ int16_t fetchMemAddr(){
 
 int main(){
     // I/O files
-    char executable_file[] = "func_10";
+    char executable_file[] = "test.o";
     char stateIn[] = "file.out";
     char stateOut[] = "file.out";
 
@@ -390,7 +453,7 @@ int main(){
 
     // we can use the stack pointer to calculate where to load the rest of the memory from the state file
 
-    stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1); // TODO check 
+    stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1);
 
     stateFileIn.close();
 
@@ -404,6 +467,8 @@ int main(){
     int16_t entryPoint;
     bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
     reg.pc = int64_t(entryPoint);
+    current_byte_index = reg.pc / 8;
+    current_bit_index = 0;
 
     // load the rest of the file in buffer starting at position 0
 
