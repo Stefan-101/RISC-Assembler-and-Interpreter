@@ -761,6 +761,9 @@ for line in f:
         write_bits(REG_DICT[line[3]])
         curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
+# allignment for global variables
+write_bits([0] * (8 - len(bit_queue)))
+
 # write global variables in object file
 curr_address += len(glb_var_bits)
 write_bits(glb_var_bits)
