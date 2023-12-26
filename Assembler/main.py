@@ -213,6 +213,9 @@ def process_labels(file_name):
 
         elif line[0] == "j":
             simulated_address += len(OPCODE[line[0]]) + MEM_ADDRESS_SIZE
+        
+        elif line[0] == "mul":
+            simulated_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
         elif line[0] == "li":
             immediate_val = int(line[2])
@@ -295,7 +298,6 @@ if linked_obj_files != []:
         label_mem_addr = 0
         while byte := file.read(1):
             bit_pointer += 8
-            print(1)
             if label_curr_str == [] and label_mem_addr == 0 and byte == b'\x00':
                 # if we encounter [0], the whole table has been fetched
                 break
@@ -497,6 +499,14 @@ for line in f:
         write_bits(REG_DICT[line[2]])
         write_bits(REG_DICT["zero"])
         curr_address += len(OPCODE["add"]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT["zero"])
+
+    elif line[0] == "mul":
+        # reg1 = reg2 * reg3
+        write_bits(OPCODE[line[0]])
+        write_bits(REG_DICT[line[1]])
+        write_bits(REG_DICT[line[2]])
+        write_bits(REG_DICT[line[3]])
+        curr_address += len(OPCODE[line[0]]) + len(REG_DICT[line[1]]) + len(REG_DICT[line[2]]) + len(REG_DICT[line[3]])
 
     elif line[0] == "bge":
         # branch if reg1 is greater than or equal to reg2
