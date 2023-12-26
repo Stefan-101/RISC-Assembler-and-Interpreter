@@ -6,11 +6,18 @@
 using namespace std;
 
 char buffer[8191];          // 8kB binary buffer
-char current_byte;          // the current byte that is being worked on
-int current_byte_length;    
+int current_byte_index;     // index of the byte being processed
+int current_bit_index;      // index of the bit within the byte being processed
 
 const int MEM_ADDR_SIZE = 16;
 const int IMMEDIATE_SIZE = 32;
+
+// FETCH FUNCTIONS prototypes
+
+void (*fetchInstr())();
+int64_t* fetchReg();
+int32_t fetchImm();
+int16_t fetchMemAddr();
 
 // CPU REGISTERS
 struct{
@@ -87,9 +94,10 @@ struct{
 
 void addi(){
     // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
-    // TODO fetch REG1, REG2, IMM
-    // test
-    cout << "addi was called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int64_t imm = int64_t(fetchImm());
+    *reg1 = *reg2 + imm;
 }
 
 void add(){
@@ -309,12 +317,12 @@ void (*fetchInstr())(){
     string opcode = "";
     while (opcode_map.find(opcode) == opcode_map.end()){
         // continue reading bits and searching for an opcode
-        if (!current_byte_length){
-            current_byte = buffer[reg.pc/8];
-            current_byte_length = 8;
+        if (current_bit_index >= 8){
+            current_byte_index = reg.pc/8;
+            current_bit_index = 0;
         }
-        opcode += to_string((current_byte >> 7) & 1);
-        current_byte <<= 1; current_byte_length--;
+        opcode += to_string((buffer[current_byte_index] >> (7 - current_bit_index)) & 1);
+        current_bit_index++;
         reg.pc++;
     }
     return opcode_map.find(opcode) -> second;
@@ -324,12 +332,12 @@ void (*fetchInstr())(){
 int64_t* fetchReg(){
     string opcode = "";
     while (reg_map.find(opcode) == reg_map.end()){
-        if (!current_byte_length){
-            current_byte = buffer[reg.pc/8];
-            current_byte_length = 8;
+        if (current_bit_index >= 8){
+            current_byte_index = reg.pc/8;
+            current_bit_index = 0;
         }
-        opcode += to_string((current_byte >> 7) & 1);
-        current_byte <<= 1; current_byte_length--;
+        opcode += to_string((buffer[current_byte_index] >> (7 - current_bit_index)) & 1);
+        current_bit_index++;
         reg.pc++;
     }
     return reg_map.find(opcode) -> second;
@@ -338,14 +346,13 @@ int64_t* fetchReg(){
 int32_t fetchImm(){
     int32_t immediate = 0;
     for (int bits_cnt = 0; bits_cnt < 32; bits_cnt++){
-        if (!current_byte_length){
-            current_byte = buffer[reg.pc/8];
-            current_byte_length = 8;
+        if (current_bit_index >= 8){
+            current_byte_index = reg.pc/8;
+            current_bit_index = 0;
         }
         immediate <<= 1;
-        immediate |= (current_byte >> 7) & 1;
-        current_byte <<= 1; current_byte_length--;
-
+        immediate |= (buffer[current_byte_index] >> (7 - current_bit_index)) & 1;
+        current_bit_index++;
         reg.pc++;
     }
     return immediate;
@@ -354,14 +361,13 @@ int32_t fetchImm(){
 int16_t fetchMemAddr(){
     int16_t mem_addr = 0;
     for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
-        if (!current_byte_length){
-            current_byte = buffer[reg.pc/8];
-            current_byte_length = 8;
+        if (current_bit_index >= 8){
+            current_byte_index = reg.pc/8;
+            current_bit_index = 0;
         }
         mem_addr <<= 1;
-        mem_addr |= (current_byte >> 7) & 1;
-        current_byte <<= 1; current_byte_length--;
-
+        mem_addr |= (buffer[current_byte_index] >> (7 - current_bit_index)) & 1;
+        current_bit_index++;
         reg.pc++;
     }
     return mem_addr;
@@ -384,7 +390,7 @@ int main(){
 
     // we can use the stack pointer to calculate where to load the rest of the memory from the state file
 
-    stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1);
+    stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1); // TODO check 
 
     stateFileIn.close();
 
@@ -413,20 +419,6 @@ int main(){
 
 
     // EXECUTE INSTRUCTIONS
-    // tests
-    reg.pc = int64_t(24);
-    current_byte = buffer[reg.pc/8];
-    fetchInstr()();
-    fetchReg();
-    fetchReg();
-    cout << fetchImm() << endl;
-    fetchInstr()();
-    fetchReg();
-    cout << int(fetchMemAddr()) << endl;
-    fetchReg();
-    fetchInstr()();
-    fetchReg();
-    cout << fetchMemAddr() << endl;
     
 
 

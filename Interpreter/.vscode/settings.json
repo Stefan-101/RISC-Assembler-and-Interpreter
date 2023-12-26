@@ -8,6 +8,7 @@
         "iosfwd": "cpp",
         "istream": "cpp",
         "xiosbase": "cpp",
-        "xhash": "cpp"
+        "xhash": "cpp",
+        "string": "cpp"
     }
 }
