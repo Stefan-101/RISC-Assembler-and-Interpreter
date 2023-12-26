@@ -268,7 +268,7 @@ def process_labels(file_name):
     
     # allignment for global variables
     simulated_address += 8 - simulated_address%8
-    
+
     f.close()
 
 # I/O Files
@@ -295,6 +295,7 @@ if linked_obj_files != []:
         label_mem_addr = 0
         while byte := file.read(1):
             bit_pointer += 8
+            print(1)
             if label_curr_str == [] and label_mem_addr == 0 and byte == b'\x00':
                 # if we encounter [0], the whole table has been fetched
                 break
@@ -312,7 +313,7 @@ if linked_obj_files != []:
                 label_mem_addr = 0
 
         # copy the rest of the binary
-        while byte := file.read(1):
+        while byte:
             if fetched_labels != [] and bit_pointer == fetched_labels[0][1]:
                 label_addresses.append((fetched_labels[0][0],curr_address))
                 del fetched_labels[0]
@@ -321,6 +322,8 @@ if linked_obj_files != []:
             curr_address += 8
             simulated_address += 8
             bit_pointer += 8
+
+            byte = file.read(1)
         
         file.close()
 
