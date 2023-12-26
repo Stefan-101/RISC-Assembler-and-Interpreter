@@ -5,15 +5,16 @@
 #include <string>
 using namespace std;
 
-char buffer[8191];  // 8kB binary buffer
-char current_byte;  // the current byte that is being worked on
+char buffer[8191];          // 8kB binary buffer
+char current_byte;          // the current byte that is being worked on
+int current_byte_length;    
 
 const int MEM_ADDR_SIZE = 16;
 const int IMMEDIATE_SIZE = 32;
 
 // CPU REGISTERS
 struct{
-    int64_t ip = 0;     // instruction pointer
+    int64_t pc = 0;     // program counter
 
     int64_t t0;
     int64_t t1;
@@ -88,7 +89,7 @@ void addi(){
     // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
     // TODO fetch REG1, REG2, IMM
     // test
-    cout << "addi was called";
+    cout << "addi was called" << endl;
 }
 
 void add(){
@@ -103,7 +104,7 @@ void j(){
 
 void ret(){
     // jump to the address in RA
-    reg.ip = reg.ra;
+    reg.pc = reg.ra;
 }
 
 void li(){
@@ -129,7 +130,7 @@ void fmv_s(){
 void sd(){
     // store 64 bits from reg to mem ~ sd reg1, 4(reg2)
     // TODO fetch reg1, reg2, offset
-    cout << "sd has been called";
+    cout << "sd has been called" << endl;
 }
 
 void lb(){
@@ -170,6 +171,7 @@ void fld(){
 void la(){
     // load address in register
     // TODO fetch reg1, mem_addr
+    cout << "la has been called" << endl;
 }
 
 void fsw(){
@@ -307,12 +309,13 @@ void (*fetchInstr())(){
     string opcode = "";
     while (opcode_map.find(opcode) == opcode_map.end()){
         // continue reading bits and searching for an opcode
-        if (!current_byte){
-            current_byte = buffer[reg.ip/8];
+        if (!current_byte_length){
+            current_byte = buffer[reg.pc/8];
+            current_byte_length = 8;
         }
         opcode += to_string((current_byte >> 7) & 1);
-        current_byte <<= 1;
-        reg.ip++;
+        current_byte <<= 1; current_byte_length--;
+        reg.pc++;
     }
     return opcode_map.find(opcode) -> second;
 }
@@ -321,43 +324,54 @@ void (*fetchInstr())(){
 int64_t* fetchReg(){
     string opcode = "";
     while (reg_map.find(opcode) == reg_map.end()){
-        if (!current_byte){
-            current_byte = buffer[reg.ip/8];
+        if (!current_byte_length){
+            current_byte = buffer[reg.pc/8];
+            current_byte_length = 8;
         }
         opcode += to_string((current_byte >> 7) & 1);
-        current_byte <<= 1;
-        reg.ip++;
+        current_byte <<= 1; current_byte_length--;
+        reg.pc++;
     }
     return reg_map.find(opcode) -> second;
+}
+
+int32_t fetchImm(){
+    int32_t immediate = 0;
+    for (int bits_cnt = 0; bits_cnt < 32; bits_cnt++){
+        if (!current_byte_length){
+            current_byte = buffer[reg.pc/8];
+            current_byte_length = 8;
+        }
+        immediate <<= 1;
+        immediate |= (current_byte >> 7) & 1;
+        current_byte <<= 1; current_byte_length--;
+
+        reg.pc++;
+    }
+    return immediate;
+}
+
+int16_t fetchMemAddr(){
+    int16_t mem_addr = 0;
+    for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
+        if (!current_byte_length){
+            current_byte = buffer[reg.pc/8];
+            current_byte_length = 8;
+        }
+        mem_addr <<= 1;
+        mem_addr |= (current_byte >> 7) & 1;
+        current_byte <<= 1; current_byte_length--;
+
+        reg.pc++;
+    }
+    return mem_addr;
 }
 
 int main(){
     // I/O files
     char executable_file[] = "func_10";
-    char stateIn[] = "file.in";
+    char stateIn[] = "file.out";
     char stateOut[] = "file.out";
-
-
-
-    // LOAD EXECUTABLE
-    // load entry point from binary file
-
-    ifstream bin_exec(executable_file, ios::binary);
-
-    int16_t entryPoint;
-    bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
-    reg.ip = int64_t(entryPoint);
-
-    // load the rest of the file in buffer starting at position 0
-
-    bin_exec.seekg(0, ios::end);
-    streampos fileSize = bin_exec.tellg();
-    streampos bytesReadSoFar = sizeof(entryPoint);
-    streampos remainingSize = fileSize - bytesReadSoFar;
-    bin_exec.seekg(bytesReadSoFar, ios::beg);
-    bin_exec.read(buffer, remainingSize);
-
-    bin_exec.close();
 
 
 
@@ -376,9 +390,44 @@ int main(){
 
 
 
-    // EXECUTE INSTRUCTIONS
+    // LOAD EXECUTABLE
+    // load entry point from binary file
 
-    current_byte = buffer[reg.ip/8];
+    ifstream bin_exec(executable_file, ios::binary);
+
+    int16_t entryPoint;
+    bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
+    reg.pc = int64_t(entryPoint);
+
+    // load the rest of the file in buffer starting at position 0
+
+    bin_exec.seekg(0, ios::end);
+    streampos fileSize = bin_exec.tellg();
+    streampos bytesReadSoFar = sizeof(entryPoint);
+    streampos remainingSize = fileSize - bytesReadSoFar;
+    bin_exec.seekg(bytesReadSoFar, ios::beg);
+    bin_exec.read(buffer, remainingSize);
+
+    bin_exec.close();
+
+
+
+    // EXECUTE INSTRUCTIONS
+    // tests
+    reg.pc = int64_t(24);
+    current_byte = buffer[reg.pc/8];
+    fetchInstr()();
+    fetchReg();
+    fetchReg();
+    cout << fetchImm() << endl;
+    fetchInstr()();
+    fetchReg();
+    cout << int(fetchMemAddr()) << endl;
+    fetchReg();
+    fetchInstr()();
+    fetchReg();
+    cout << fetchMemAddr() << endl;
+    
 
 
     // STORE STATE
