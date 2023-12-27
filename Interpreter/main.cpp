@@ -21,7 +21,6 @@ int32_t fetchImm();
 int16_t fetchMemAddr();
 
 // CPU REGISTERS
-// TODO split floating_points?
 struct{
     int64_t pc = 0;     // program counter ~ points to bit address within the buffer
 
@@ -29,48 +28,48 @@ struct{
     int64_t t1;
     int64_t a0;
     int64_t sp = 8192;  // empty stack ~ points to byte address within the buffer
-    int64_t ft0;
+    double ft0;
     int64_t a1;
     int64_t t3;
-    int64_t ft1;
+    double ft1;
     int64_t t2;
     int64_t t4;
     int64_t a2;
-    int64_t fa0;
+    double fa0;
     int64_t t5;
     int64_t s1;
-    int64_t fa2;
-    int64_t fa1;
+    double fa2;
+    double fa1;
     int64_t ra;
-    int64_t ft3;
-    int64_t ft2;
+    double ft3;
+    double ft2;
     int64_t zero = 0;       // should be constant but it's easier to work if they all have the same data type
     int64_t a3;
-    int64_t ft11;
-    int64_t ft10;
-    int64_t ft9;
-    int64_t ft8;
-    int64_t fs11;
-    int64_t fs10;
-    int64_t fs9;
-    int64_t fs8;
-    int64_t fs7;
-    int64_t fs6;
-    int64_t fs5;
-    int64_t fs4;
-    int64_t fs3;
-    int64_t fs2;
-    int64_t fa7;
-    int64_t fa6;
-    int64_t fa5;
-    int64_t fa4;
-    int64_t fa3;
-    int64_t fs1;
-    int64_t fs0;
-    int64_t ft7;
-    int64_t ft6;
-    int64_t ft5;
-    int64_t ft4;
+    double ft11;
+    double ft10;
+    double ft9;
+    double ft8;
+    double fs11;
+    double fs10;
+    double fs9;
+    double fs8;
+    double fs7;
+    double fs6;
+    double fs5;
+    double fs4;
+    double fs3;
+    double fs2;
+    double fa7;
+    double fa6;
+    double fa5;
+    double fa4;
+    double fa3;
+    double fs1;
+    double fs0;
+    double ft7;
+    double ft6;
+    double ft5;
+    double ft4;
     int64_t t6;
     int64_t s11;
     int64_t s10;
@@ -391,13 +390,13 @@ unordered_map<string, int64_t*> reg_map = {
     {"1000", &reg.t3},
     {"11011", &reg.t4},
     {"100111", &reg.t5},
-    {"1011", &reg.ft0},
-    {"0101", &reg.ft1},
-    {"10010111", &reg.ft2},
-    {"1001010", &reg.ft3},
-    {"00000", &reg.fa0},
-    {"000011", &reg.fa1},
-    {"100100", &reg.fa2}
+    {"1011", reinterpret_cast<int64_t*>(&reg.ft0)},
+    {"0101", reinterpret_cast<int64_t*>(&reg.ft1)},
+    {"10010111", reinterpret_cast<int64_t*>(&reg.ft2)},
+    {"1001010", reinterpret_cast<int64_t*>(&reg.ft3)},
+    {"00000", reinterpret_cast<int64_t*>(&reg.fa0)},
+    {"000011", reinterpret_cast<int64_t*>(&reg.fa1)},
+    {"100100", reinterpret_cast<int64_t*>(&reg.fa2)}
 };
 
 // FETCH FUNCTIONS
