@@ -160,7 +160,24 @@ int main(){
     output << endl << "STACK" << endl;
 
     for (int i = reg.sp; i < 8192; i++){
-        output << i << ": 0x" << hex << int32_t(buffer[i]) << dec << " (" << int32_t(buffer[i]) << ")" << endl;
+        output << i << ": 0x" << hex << int32_t(buffer[i]) << dec << " (" << int32_t(buffer[i]) << ") ";
+        if (buffer[i] < 128){
+            switch (buffer[i]){
+                case ' ':
+                    output << "[SPACE]" << endl;
+                    break;
+                case '\0':
+                    output << "[NULL]" << endl;
+                    break;
+                case '\n':
+                    output << "[ENTER]" << endl;
+                    break;
+                default:
+                    output << buffer[i] << endl;
+                    break;
+            }
+        }
+        else output << endl;
     }
 
     stateFileIn.close();
