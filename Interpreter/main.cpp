@@ -7,9 +7,6 @@
 using namespace std;
 
 char buffer[8191];          // 8kB binary buffer
-int current_byte_index;     // index of the byte being processed
-int current_bit_index;      // index of the bit within the byte being processed
-// TODO ^ don't use auxiliary vars
 
 const int MEM_ADDR_SIZE = 16;
 const int IMMEDIATE_SIZE = 32;
@@ -115,8 +112,6 @@ void add(){
 void j(){
     // sets instruction pointer to the memory address
     reg.pc = int64_t(fetchMemAddr());
-    current_byte_index = reg.pc / 8;    
-    current_bit_index = reg.pc % 8; 
 }
 
 void ret(){
@@ -124,8 +119,6 @@ void ret(){
     // TODO end execution if RA is -1
     cout << "SYS: ret has been called" << endl;
     reg.pc = reg.ra;
-    current_byte_index = reg.pc / 8;    
-    current_bit_index = reg.pc % 8; 
 
 }
 
@@ -195,9 +188,7 @@ void call(){
         default:
             cout << "SYS: branch default was executed" << endl;
             reg.ra = reg.pc;                    // save return address
-            reg.pc = int64_t(mem_addr);         // jump to memory_address
-            current_byte_index = reg.pc / 8;    
-            current_bit_index = reg.pc % 8;     
+            reg.pc = int64_t(mem_addr);         // jump to memory_address   
     }
 }
 
@@ -382,12 +373,7 @@ void (*fetchInstr())(){
     string opcode = "";
     while (opcode_map.find(opcode) == opcode_map.end()){
         // continue reading bits and searching for an opcode
-        if (current_bit_index >= 8){
-            current_byte_index = reg.pc/8;
-            current_bit_index = 0;
-        }
-        opcode += to_string((buffer[current_byte_index] >> (7 - current_bit_index)) & 1);
-        current_bit_index++;
+        opcode += to_string((buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1);
         reg.pc++;
     }
     return opcode_map.find(opcode) -> second;
@@ -397,12 +383,7 @@ void (*fetchInstr())(){
 int64_t* fetchReg(){
     string opcode = "";
     while (reg_map.find(opcode) == reg_map.end()){
-        if (current_bit_index >= 8){
-            current_byte_index = reg.pc/8;
-            current_bit_index = 0;
-        }
-        opcode += to_string((buffer[current_byte_index] >> (7 - current_bit_index)) & 1);
-        current_bit_index++;
+        opcode += to_string((buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1);
         reg.pc++;
     }
     return reg_map.find(opcode) -> second;
@@ -411,13 +392,8 @@ int64_t* fetchReg(){
 int32_t fetchImm(){
     int32_t immediate = 0;
     for (int bits_cnt = 0; bits_cnt < 32; bits_cnt++){
-        if (current_bit_index >= 8){
-            current_byte_index = reg.pc/8;
-            current_bit_index = 0;
-        }
         immediate <<= 1;
-        immediate |= (buffer[current_byte_index] >> (7 - current_bit_index)) & 1;
-        current_bit_index++;
+        immediate |= (buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1;
         reg.pc++;
     }
     return immediate;
@@ -426,13 +402,8 @@ int32_t fetchImm(){
 int16_t fetchMemAddr(){
     int16_t mem_addr = 0;
     for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
-        if (current_bit_index >= 8){
-            current_byte_index = reg.pc/8;
-            current_bit_index = 0;
-        }
         mem_addr <<= 1;
-        mem_addr |= (buffer[current_byte_index] >> (7 - current_bit_index)) & 1;
-        current_bit_index++;
+        mem_addr |= (buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1;
         reg.pc++;
     }
     return mem_addr;
@@ -469,8 +440,6 @@ int main(){
     int16_t entryPoint;
     bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
     reg.pc = int64_t(entryPoint);
-    current_byte_index = reg.pc / 8;
-    current_bit_index = 0;
 
     // load the rest of the file in buffer starting at position 0
 
@@ -486,7 +455,19 @@ int main(){
 
 
     // EXECUTE INSTRUCTIONS
-    
+    //tests
+    reg.sp = 8192;
+    reg.ra = -1;
+    for (int i = 0; i < 13; i++){
+        fetchInstr()();
+    }
+    fetchInstr()();
+    fetchInstr()();
+    fetchInstr()();
+    for (int i = 0; i < 6; i++){
+        fetchInstr()();
+    }
+    cout << reg.pc;
 
 
     // STORE STATE
