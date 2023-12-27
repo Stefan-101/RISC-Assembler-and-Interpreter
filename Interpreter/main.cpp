@@ -488,9 +488,6 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
     //tests
-    strcpy(&buffer[1000], "this is a test");
-    reg.a0 = 2000;
-    reg.a1 = 1000;
     auto cinstr = fetchInstr();
     while (cinstr != &ret){
         cinstr();
