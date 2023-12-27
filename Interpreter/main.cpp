@@ -21,6 +21,7 @@ int32_t fetchImm();
 int16_t fetchMemAddr();
 
 // CPU REGISTERS
+// TODO split floating_points?
 struct{
     int64_t pc = 0;     // program counter ~ points to bit address within the buffer
 
@@ -113,6 +114,7 @@ void add(){
 
 void j(){
     // sets instruction pointer to the memory address
+    cout << "SYS: j has been called" << endl;
     reg.pc = int64_t(fetchMemAddr());
 }
 
@@ -146,8 +148,10 @@ void beqz(){
     cout << "SYS: beqz has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
-    if (reg1 == 0)
+    if (*reg1 == 0){
+        cout << "SYS: BRANCH TRUE" << endl;
         reg.pc = int64_t(mem_addr);
+    }
 }
 
 void fmv_s(){
@@ -167,7 +171,11 @@ void sd(){
 
 void lb(){
     // load 8 bits from mem address, sign extend the value and store to reg
-    // TODO fetch reg1, reg2 offset
+    cout << "SYS: lb has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reg1 = int64_t(*reinterpret_cast<int8_t*>(&buffer[*reg2 + offset]));
 }
 
 void call(){
@@ -201,6 +209,7 @@ void call(){
         case 65534:
             cout << "SYS: branch scanf was executed " << endl;
             scanf(&buffer[reg.a0], &buffer[reg.a1], &buffer[reg.a2], &buffer[reg.a3], &buffer[reg.a4], &buffer[reg.a5]);
+            // TODO fix scanf call
             break;
         case 65533:
             cout << "SYS: branch strlen was executed " << endl;
@@ -215,7 +224,11 @@ void call(){
 
 void sb(){
     // store 8 bits from reg to mem
-    // TODO fetch reg1, reg2, offset
+    cout << "SYS: sb has been called " << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reinterpret_cast<int8_t*>(&buffer[*reg2 + offset]) = int8_t(*reg1 & 0xFF);
 }
 
 void lw(){
@@ -432,7 +445,7 @@ int16_t fetchMemAddr(){
 
 int main(){
     // I/O files
-    char executable_file[] = "printf_test";
+    char executable_file[] = "test.o";
     char stateIn[] = "blank_file.in";
     char stateOut[] = "file.out";
 
@@ -477,12 +490,18 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
     //tests
-    reg.sp = 8192;
-    reg.ra = -1;
-    reg.a4 = 57575757;
-    for (int i = 0; i < 4; i++){
-        fetchInstr()();
+    buffer[1000] = 't';
+    buffer[1001] = 'e';
+    //buffer[1002] = 's';
+    buffer[1003] = 't';
+    reg.a0 = 2000;
+    reg.a1 = 1000;
+    auto cinstr = fetchInstr();
+    while (cinstr != &ret){
+        cinstr();
+        cinstr = fetchInstr();
     }
+    cout << &buffer[2000];
     /*fetchInstr()();
     fetchInstr()();
     fetchInstr()();
