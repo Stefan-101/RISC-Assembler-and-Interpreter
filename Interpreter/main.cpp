@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <unordered_map>
 #include <string>
+#include <vector>
+#include <variant>
 using namespace std;
 
 char buffer[8191];          // 8kB binary buffer
@@ -171,11 +173,30 @@ void lb(){
 void call(){
     // stores current pc + call_size + mem_addr_size and jumps to mem addr
     uint16_t mem_addr = uint16_t(fetchMemAddr());
+    char *start,*end;
+    vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
     switch (mem_addr){
         case 65535:
             cout << "SYS: branch printf was executed " << endl;
-            // printf only works with 5 integers (formats with %s won't work)
-            printf(&buffer[reg.a0], reg.a1, reg.a2, reg.a3, reg.a4, reg.a5);
+            // simulate printf function (only supports 7 args, stack reading not implemented here)
+            start = &buffer[reg.a0];
+            end = strchr(&buffer[reg.a0], '%');
+            while (end){
+                end[0] = '\0';
+                cout << start;
+                // only %d and %s are implemented here
+                if (end[1] == 'd'){
+                    cout << *regs.front();
+                    regs.erase(regs.begin());
+                }
+                else if (end[1] == 's'){
+                    cout << &buffer[*regs.front()];
+                }
+                start = &end[2];
+                end = strchr(start,'%');
+            }
+            cout << start;
+            
             break;
         case 65534:
             cout << "SYS: branch scanf was executed " << endl;
@@ -411,7 +432,7 @@ int16_t fetchMemAddr(){
 
 int main(){
     // I/O files
-    char executable_file[] = "test.o";
+    char executable_file[] = "printf_test";
     char stateIn[] = "blank_file.in";
     char stateOut[] = "file.out";
 
@@ -458,16 +479,17 @@ int main(){
     //tests
     reg.sp = 8192;
     reg.ra = -1;
-    for (int i = 0; i < 13; i++){
+    reg.a4 = 57575757;
+    for (int i = 0; i < 4; i++){
         fetchInstr()();
     }
-    fetchInstr()();
+    /*fetchInstr()();
     fetchInstr()();
     fetchInstr()();
     for (int i = 0; i < 6; i++){
         fetchInstr()();
     }
-    cout << reg.pc;
+    cout << reg.pc;*/
 
 
     // STORE STATE
