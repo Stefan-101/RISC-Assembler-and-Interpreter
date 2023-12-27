@@ -9,7 +9,6 @@ char buffer[8191];
 
 struct{
     int64_t pc = 0;     // program counter ~ points to bit address within the buffer
-
     int64_t t0;
     int64_t t1;
     int64_t a0;
@@ -79,7 +78,9 @@ struct{
 int main(){
     // load state file
     char stateIn[] = "file.out";
+    char readableOutputFile[] = "file.txt";
     ifstream stateFileIn(stateIn, ios::binary);
+    ofstream output(readableOutputFile);
 
     stateFileIn.read(reinterpret_cast<char*>(&reg), sizeof(reg));
 
@@ -88,9 +89,6 @@ int main(){
     stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1);
 
     stateFileIn.close();
-
-    char readableOutputFile[] = "file.txt";
-    ofstream output(readableOutputFile);
 
     // output regs
     output << "REGISTERS" << endl;
@@ -164,6 +162,9 @@ int main(){
     for (int i = reg.sp; i < 8192; i++){
         output << i << ": 0x" << hex << int32_t(buffer[i]) << dec << " (" << int32_t(buffer[i]) << ")" << endl;
     }
+
+    stateFileIn.close();
+    output.close();
 
     return 0;
 }
