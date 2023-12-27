@@ -9,6 +9,8 @@
         "istream": "cpp",
         "xiosbase": "cpp",
         "xhash": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "vector": "cpp",
+        "ostream": "cpp"
     }
 }

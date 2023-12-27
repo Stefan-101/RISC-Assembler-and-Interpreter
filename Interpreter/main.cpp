@@ -23,7 +23,6 @@ int16_t fetchMemAddr();
 // CPU REGISTERS
 struct{
     int64_t pc = 0;     // program counter ~ points to bit address within the buffer
-
     int64_t t0;
     int64_t t1;
     int64_t a0;
@@ -178,7 +177,7 @@ void lb(){
 }
 
 void call(){
-    // stores current pc + call_size + mem_addr_size and jumps to mem addr
+    // stores current pc and jumps to memory address
     uint16_t mem_addr = uint16_t(fetchMemAddr());
     char *start,*end;
     vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
@@ -390,8 +389,8 @@ unordered_map<string, int64_t*> reg_map = {
     {"1000", &reg.t3},
     {"11011", &reg.t4},
     {"100111", &reg.t5},
-    {"1011", reinterpret_cast<int64_t*>(&reg.ft0)},
-    {"0101", reinterpret_cast<int64_t*>(&reg.ft1)},
+    {"1011", reinterpret_cast<int64_t*>(&reg.ft0)},         // these are reinterpreted to make the lookup
+    {"0101", reinterpret_cast<int64_t*>(&reg.ft1)},         // table easier to work with
     {"10010111", reinterpret_cast<int64_t*>(&reg.ft2)},
     {"1001010", reinterpret_cast<int64_t*>(&reg.ft3)},
     {"00000", reinterpret_cast<int64_t*>(&reg.fa0)},
@@ -489,10 +488,7 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
     //tests
-    buffer[1000] = 't';
-    buffer[1001] = 'e';
-    //buffer[1002] = 's';
-    buffer[1003] = 't';
+    strcpy(&buffer[1000], "this is a test");
     reg.a0 = 2000;
     reg.a1 = 1000;
     auto cinstr = fetchInstr();
