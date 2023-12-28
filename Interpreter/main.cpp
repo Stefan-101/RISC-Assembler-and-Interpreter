@@ -93,7 +93,7 @@ struct{
 // INSTRUCTION FUNCTIONS
 
 void addi(){
-    // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
+    // reg1 = reg2 + 32-bit immediate (sign extended to 64 bits)
     cout << "SYS: addi has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
@@ -111,28 +111,26 @@ void add(){
 }
 
 void j(){
-    // sets instruction pointer to the memory address
+    // sets program counter to the memory address
     cout << "SYS: j has been called" << endl;
     reg.pc = int64_t(fetchMemAddr());
 }
 
 void ret(){
-    // jump to the address in RA or end execution if RA is -1
-    // TODO end execution if RA is -1
+    // sets program counter to the value stored in ra register
     cout << "SYS: ret has been called" << endl;
     reg.pc = reg.ra;
-
 }
 
 void li(){
-    // reg1 = imm
+    // reg1 = 32-bit immediate (sign extended to 64 bits)
     cout << "SYS: li has been called " << endl;
     int64_t* reg1 = fetchReg();
     *reg1 = int64_t(fetchImm());
 }
 
 void bge(){
-    // branch if reg1 is greater than or equal to reg2
+    // branch if reg1 >= reg2
     cout << "SYS: bge has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
@@ -142,18 +140,18 @@ void bge(){
 }
 
 void beqz(){
-    // branch if reg is equal to zero (could have been merged with beq but it is not implemented here)
+    // branch if reg == zero (could have been merged with beq but it is not implemented here)
     cout << "SYS: beqz has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
-    if (*reg1 == 0){
+    if (*reg1 == 0){                            // *reg1 == reg.zero
         cout << "SYS: BRANCH TRUE" << endl;
         reg.pc = int64_t(mem_addr);
     }
 }
 
 void fmv_s(){
-    // copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
+    // reg1 = reg2 (floats) (could be merged with another instruction but it is not implemented here)
     cout << "SYS: fmv.s has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     float* reg2 = reinterpret_cast<float*>(fetchReg());
@@ -161,7 +159,7 @@ void fmv_s(){
 }
 
 void sd(){
-    // store 64 bits from reg to mem ~ e.g. sd reg1, 4(reg2)
+    // store 64 bits from reg to memory address
     cout << "SYS: sd has been called " << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
@@ -171,7 +169,7 @@ void sd(){
 }
 
 void lb(){
-    // load 8 bits from mem address, sign extend the value and store to reg
+    // load 8 bits from mem address, sign extend the value and store to reg1
     cout << "SYS: lb has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
@@ -182,21 +180,27 @@ void lb(){
 void call(){
     // stores current pc and jumps to memory address (or executes a predefined function)
     uint16_t mem_addr = uint16_t(fetchMemAddr());
+
+    // auxiliary variables for processing predefined functions
     char *start,*end;
     char scanf_buffer[1000];
     int i = 0;
     int scanf_buffer_index = 0;
     vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
+
+
     switch (mem_addr){
         // printf and scanf are simulated since we do not know during compilation how many args will be passed
         case 65535:
             cout << "SYS: branch printf was executed " << endl;
+
             // simulate printf function (only supports 7 args, stack reading not implemented here)
             start = &buffer[reg.a0];
             end = strchr(&buffer[reg.a0], '%');
             while (end){
                 end[0] = '\0';
                 cout << start;
+
                 // only %d and %s are implemented here
                 if (end[1] == 'd'){
                     cout << *regs.front();
@@ -209,10 +213,10 @@ void call(){
                 end = strchr(start,'%');
             }
             cout << start;
-            
             break;
         case 65534:
             cout << "SYS: branch scanf was executed " << endl;
+
             // simulate scanf function (only supports 7 args, stack reading not implemented here)
             cin.getline(scanf_buffer,1000);
             while (scanf_buffer[scanf_buffer_index] != '\0' && buffer[reg.a0 + i] != '\0'){
@@ -253,7 +257,7 @@ void call(){
 }
 
 void sb(){
-    // store 8 bits from reg to mem
+    // store 8 bits from reg1 to mem
     cout << "SYS: sb has been called " << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
@@ -262,7 +266,7 @@ void sb(){
 }
 
 void lw(){
-    // load 32 bits from mem address, sign extend the value and store to reg
+    // load 32 bits from mem address, sign extend the value and store to reg1
     cout << "SYS: lw has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
@@ -271,7 +275,7 @@ void lw(){
 }
 
 void ld(){
-    // load 64 bits from mem address and store to reg
+    // load 64 bits from mem address and store to reg1
     cout << "SYS: ld has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
@@ -291,8 +295,7 @@ void flt_s(){
 }
 
 void fld(){
-    // load 64 bits from mem address and store to reg (fp)
-    // TODO fetch reg1, reg2, offset
+    // load 64 bits from mem address and store to reg (double)
     cout << "SYS: fld has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     int16_t offset = fetchMemAddr();
@@ -306,10 +309,12 @@ void la(){
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
     *reg1 = int64_t(uint16_t(mem_addr)) / 8;    // transform bit address to byte address of variable in the buffer
+                                                // bit address needs to be alligned to a multiple of 8
+                                                // (good enough considering stack and globals are alligned)
 }
 
 void fsw(){
-    // store 32 bit fp to memory address
+    // reg1 to memory address (float)
     cout << "SYS: fsw has been called " << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     int16_t offset = fetchMemAddr();
@@ -318,9 +323,8 @@ void fsw(){
 }
 
 void slli(){
-    // logical left shift on reg2 by amount held in immediate and store to reg1
+    // logical left shift: reg1 = reg2 << imm
     // immediate is an unsigned 6 bit value
-    // TODO fetch reg1, reg2, imm
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
@@ -386,7 +390,7 @@ void mul(){
 
 unordered_map<string, void(*)()> opcode_map = {
     // lookup table used to decode huffman codes
-    // keys are string to make decoding easier
+    // keys are strings to make decoding easier
 
     {"110",  &addi},
     {"001",  &add},
@@ -424,7 +428,8 @@ unordered_map<string, void(*)()> opcode_map = {
 
 unordered_map<string, int64_t*> reg_map = {
     // lookup table used to decode huffman codes
-    // keys are string to make decoding easier
+    // not all registers are here because some are not used and have relatively big encodings
+    // keys are strings to make decoding easier
 
     {"0001", &reg.zero},
     {"000010", &reg.ra},
@@ -511,7 +516,6 @@ int main(){
 
 
     // LOAD STATE
-    // load registers and memory in buffer
 
     ifstream stateFileIn(stateIn, ios::binary);
 
@@ -520,10 +524,10 @@ int main(){
         return 0;
     }
 
+    // load registers and memory in buffer
     stateFileIn.read(reinterpret_cast<char*>(&reg), sizeof(reg));
 
-    // we can use the stack pointer to calculate where to load the rest of the memory from the state file
-
+    // we can use the stack pointer to calculate where to load the rest of the memory from the state file (the stack)
     stateFileIn.read(&buffer[reg.sp], 8191 - reg.sp + 1);
 
     stateFileIn.close();
@@ -531,7 +535,6 @@ int main(){
 
 
     // LOAD EXECUTABLE
-    // load entry point from binary file
 
     ifstream bin_exec(executable_file, ios::binary);
 
@@ -540,12 +543,12 @@ int main(){
         return 0;
     }
 
+    // load entry point from executable file
     int16_t entryPoint;
     bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
     reg.pc = int64_t(entryPoint);
 
     // load the rest of the file in buffer starting at position 0
-
     bin_exec.seekg(0, ios::end);
     streampos fileSize = bin_exec.tellg();
     streampos bytesReadSoFar = sizeof(entryPoint);
