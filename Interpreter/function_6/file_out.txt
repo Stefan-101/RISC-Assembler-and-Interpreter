@@ -67,21 +67,21 @@ gp: 0
 
 STACK
 8142: 0x19 (25) 
-8143: 0xffffffff (-1) 
-8144: 0xffffffff (-1) 
-8145: 0xffffffff (-1) 
-8146: 0xffffffff (-1) 
-8147: 0xffffffff (-1) 
-8148: 0xffffffff (-1) 
-8149: 0xffffffff (-1) 
-8150: 0xffffffff (-1) 
-8151: 0xffffffff (-1) 
-8152: 0xffffffff (-1) 
-8153: 0xffffffff (-1) 
-8154: 0xffffffff (-1) 
-8155: 0xffffffff (-1) 
-8156: 0xffffffff (-1) 
-8157: 0xffffffff (-1) 
+8143: 0xff (-1) 
+8144: 0xff (-1) 
+8145: 0xff (-1) 
+8146: 0xff (-1) 
+8147: 0xff (-1) 
+8148: 0xff (-1) 
+8149: 0xff (-1) 
+8150: 0xff (-1) 
+8151: 0xff (-1) 
+8152: 0xff (-1) 
+8153: 0xff (-1) 
+8154: 0xff (-1) 
+8155: 0xff (-1) 
+8156: 0xff (-1) 
+8157: 0xff (-1) 
 8158: 0x1 (1) 
 8159: 0x0 (0) [NULL]
 8160: 0x0 (0) [NULL]
