@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cstring>
 #include <cstdint>
+#include <cmath>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -333,6 +334,7 @@ void fsw(){
 void slli(){
     // logical left shift: reg1 = reg2 << imm
     // immediate is an unsigned 6 bit value
+    cout << "SYS: slli has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
@@ -340,51 +342,114 @@ void slli(){
 }
 
 void flw(){
-    return;
+    // load 32 bits from mem address and store to reg1 (float)
+    cout << "SYS: flw has been called" << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reg1 = int64_t(*reinterpret_cast<int32_t*>(&buffer[*reg2 + offset]));
 }
 
 void srai(){
-    return;
+    // reg1 = reg2 >> imm (arithmetic right shift)
+    // immediate is an unsigned 6 bit value
+    cout << "SYS: srai has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int8_t imm = fetch6bits();
+    *reg1 = *reg2 >> imm;
 }
 
 void fmul_d(){
-    return;
+    // reg1 = reg2 * reg3  (double)
+    cout << "SYS: fmul.d has been called" << endl;
+    double* reg1 = reinterpret_cast<double*>(fetchReg());
+    double* reg2 = reinterpret_cast<double*>(fetchReg());
+    double* reg3 = reinterpret_cast<double*>(fetchReg());
+    *reg1 = *reg2 * *reg3;
 }
 
 void fsub_d(){
-    return;
+    // reg1 = reg2 - reg3  (double)
+    cout << "SYS: fsub.d has been called" << endl;
+    double* reg1 = reinterpret_cast<double*>(fetchReg());
+    double* reg2 = reinterpret_cast<double*>(fetchReg());
+    double* reg3 = reinterpret_cast<double*>(fetchReg());
+    *reg1 = *reg2 - *reg3;
 }
 
 void fsqrt_d(){
-    return;
+    // reg1 = sqrt(reg2)  (double)
+    cout << "SYS: fsqrt.d has been called" << endl;
+    double* reg1 = reinterpret_cast<double*>(fetchReg());
+    double* reg2 = reinterpret_cast<double*>(fetchReg());
+    *reg1 = sqrt(*reg2);
 }
 
 void fadd_d(){
-    return;
+    // reg1 = reg2 + reg3  (double)
+    cout << "SYS: fadd.d has been called" << endl;
+    double* reg1 = reinterpret_cast<double*>(fetchReg());
+    double* reg2 = reinterpret_cast<double*>(fetchReg());
+    double* reg3 = reinterpret_cast<double*>(fetchReg());
+    *reg1 = *reg2 + *reg3;
 }
 
 void fmv_s_x(){
-    return;
+    // reg1 = reg2 (move from integer register to float point register)  (float)
+    // the integer register will be interpreted as a float
+    cout << "SYS: fmv.s.x has been called" << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    float* reg2 = reinterpret_cast<float*>(fetchReg());
+    *reg1 = *reg2;
 }
 
 void bgt(){
-    return;
+    // branch if reg1 > reg2
+    cout << "SYS: bgt has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int16_t mem_addr = fetchMemAddr();
+    if (reg1 > reg2)
+        reg.pc = int64_t(mem_addr);
 }
 
 void bnez(){
-    return;
+    // branch if reg != zero
+    cout << "SYS: bnez has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int16_t mem_addr = fetchMemAddr();
+    if (*reg1 != 0){                            // *reg1 != reg.zero
+        cout << "SYS: BRANCH TRUE" << endl;
+        reg.pc = int64_t(mem_addr);
+    }
 }
 
 void sub(){
-    return;
+    // reg1 = reg2 - reg3
+    cout << "SYS: sub has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int64_t* reg3 = fetchReg();
+    *reg1 = *reg2 - *reg3;
 }
 
 void fadd_s(){
-    return;
+    // reg1 = reg2 + reg3  (float)
+    cout << "SYS: fadd.s has been called" << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    float* reg2 = reinterpret_cast<float*>(fetchReg());
+    float* reg3 = reinterpret_cast<float*>(fetchReg());
+    *reg1 = *reg2 + *reg3;
 }
 
 void fmul_s(){
-    return;
+    // reg1 = reg2 * reg3  (float)
+    cout << "SYS: fmul.s has been called" << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    float* reg2 = reinterpret_cast<float*>(fetchReg());
+    float* reg3 = reinterpret_cast<float*>(fetchReg());
+    *reg1 = *reg2 * *reg3;
 }
 
 void mul(){
