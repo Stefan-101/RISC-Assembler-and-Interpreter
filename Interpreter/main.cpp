@@ -642,7 +642,6 @@ int main(int argc, char* argv[]){
     reg.ra = -1;    // set return address to exit code here or in stateFileIn
     while (reg.pc != -1){
         cout << reg.t0 << endl;
-        fetchInstr()();
     }
  
 
