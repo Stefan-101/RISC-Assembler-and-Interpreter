@@ -323,7 +323,7 @@ void la(){
 }
 
 void fsw(){
-    // reg1 to memory address (float)
+    // store reg1 to memory address (float)
     cout << "SYS: fsw has been called " << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     int16_t offset = fetchMemAddr();
@@ -347,7 +347,7 @@ void flw(){
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
-    *reg1 = int64_t(*reinterpret_cast<int32_t*>(&buffer[*reg2 + offset]));
+    *reg1 = *reinterpret_cast<float*>(&buffer[*reg2 + offset]);
 }
 
 void srai(){
