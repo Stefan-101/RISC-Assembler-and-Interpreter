@@ -197,7 +197,6 @@ void call(){
     int scanf_buffer_index = 0;
     vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
 
-
     switch (mem_addr){
         // printf and scanf are simulated since we do not know during compilation how many args will be passed
         case 65535:
