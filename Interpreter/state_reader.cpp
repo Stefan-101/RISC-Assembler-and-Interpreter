@@ -170,7 +170,7 @@ int main(int argc, char* argv[]){
 
     for (int i = reg.sp; i < 8192; i++){
         output << i << ": 0x" << hex << int32_t(buffer[i]) << dec << " (" << int32_t(buffer[i]) << ") ";
-        if (buffer[i] < 128){
+        if (buffer[i] < 128 && buffer[i] > -1){
             switch (buffer[i]){
                 case ' ':
                     output << "[SPACE]" << endl;
