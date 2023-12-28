@@ -100,10 +100,29 @@ int main(int argc, char* argv[]){
     // EDIT regs
 
     reg.sp -= 100;
-    strcpy(&buffer[reg.sp], "Copy n bytes from here!");
-    reg.a0 = reg.sp + 30;
+    *reinterpret_cast<float*>(&buffer[reg.sp]) = 2;
+    *reinterpret_cast<float*>(&buffer[reg.sp+4]) = 7;
+    *reinterpret_cast<float*>(&buffer[reg.sp+8]) = 3.5;
+    *reinterpret_cast<float*>(&buffer[reg.sp+12]) = 1.5;
+    *reinterpret_cast<float*>(&buffer[reg.sp+16]) = 0.123;
+    *reinterpret_cast<float*>(&buffer[reg.sp+20]) = 100.0;
+    *reinterpret_cast<float*>(&buffer[reg.sp+24]) = -2.3;
+    *reinterpret_cast<float*>(&buffer[reg.sp+28]) = 7.6;
+    *reinterpret_cast<float*>(&buffer[reg.sp+32]) = 4.20;
+
+    *reinterpret_cast<float*>(&buffer[reg.sp+40]) = 0;
+    *reinterpret_cast<float*>(&buffer[reg.sp+44]) = 0;
+    *reinterpret_cast<float*>(&buffer[reg.sp+48]) = 0;
+
+    *reinterpret_cast<float*>(&buffer[reg.sp+52]) = 4.21;
+    *reinterpret_cast<float*>(&buffer[reg.sp+56]) = 73;
+    *reinterpret_cast<float*>(&buffer[reg.sp+60]) = -50;
+
+    reg.a0 = reg.sp+40;
     reg.a1 = reg.sp;
-    reg.a2 = 4;
+    reg.a2 = reg.sp+52;
+
+
 
     // STORE STATE
     // since our functions do not use variables (only constants) and there are no heap allocations,
