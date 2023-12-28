@@ -127,6 +127,7 @@ def write_bits(bits_arr):
             binary_file.write(bytearray([byte]))
 
 # int_to_bit_arr returns the binary representation of an integer given as a string (2's complement)
+# big endian
 def int_to_bit_arr(string, size):
     num = int(string)
 
@@ -160,7 +161,8 @@ def search_addr_by_label(label, curr_addr):
 
     print("something wrong happened")
 
-#   addr_to_bits transforms an integer (an address) into a 16 bit array (mem_addr_size)
+# addr_to_bits transforms an integer (an address) into a 16 bit array (mem_addr_size)
+# big endian   
 def addr_to_bits(addr):
     if addr < 0:
         print("address must be positive")
