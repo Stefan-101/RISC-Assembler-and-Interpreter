@@ -1,6 +1,9 @@
 // Rudimentary state file reader
+// Compiled with: g++ version 13.1.0
+// Run: ./state_reader.exe <bin_file_in> <txt_file_out>
 
 #include <iostream>
+#include <cstring>
 #include <cstdint>
 #include <fstream>
 using namespace std;
@@ -75,10 +78,12 @@ struct{
     int64_t gp;
 }reg;
 
-int main(){
+int main(int argc, char* argv[]){
     // load state file
-    char stateIn[] = "file.out";
-    char readableOutputFile[] = "file.txt";
+    char stateIn[100];
+    char readableOutputFile[100];
+    strcpy(stateIn,argv[1]);
+    strcpy(readableOutputFile,argv[2]);
     ifstream stateFileIn(stateIn, ios::binary);
     ofstream output(readableOutputFile);
 
