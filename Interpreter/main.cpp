@@ -144,7 +144,7 @@ void bge(){
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
-    if (reg1 >= reg2)
+    if (*reg1 >= *reg2)
         reg.pc = int64_t(mem_addr);
 }
 
@@ -582,7 +582,7 @@ int16_t fetchMemAddr(){
 
 int main(){
     // I/O files
-    char executable_file[] = "func_1";
+    char executable_file[] = "func_3";
     char stateIn[] = "file.in";
     char stateOut[] = "file.out";
 
@@ -637,8 +637,10 @@ int main(){
 
     // instructions will be fetched and executed until the .global function exits (equivalent to reg.pc == -1)
     reg.ra = -1;    // set return address to exit code here or in stateFileIn
-    while (reg.pc != -1)
+    while (reg.pc != -1){
+        cout << reg.t0 << endl;
         fetchInstr()();
+    }
  
 
 
