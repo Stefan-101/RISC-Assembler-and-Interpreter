@@ -1,6 +1,9 @@
-// Rudimentary state file reader
+// *Rudimentary* state file reader
+//
 // Outputs a human readable txt file from a .in/.out state file
+//
 // Compiled with: g++ version 13.1.0
+//
 // Run: ./state_reader.exe <bin_file_in> <txt_file_out>
 
 #include <iostream>
