@@ -8,7 +8,7 @@
 #include <variant>
 using namespace std;
 
-char buffer[8191];          // 8kB binary buffer
+char buffer[8191];              // 8kB binary buffer
 
 const int MEM_ADDR_SIZE = 16;
 const int IMMEDIATE_SIZE = 32;
@@ -17,6 +17,7 @@ const int IMMEDIATE_SIZE = 32;
 
 void (*fetchInstr())();
 int64_t* fetchReg();
+int8_t fetch6bits();
 int32_t fetchImm();
 int16_t fetchMemAddr();
 
@@ -154,7 +155,10 @@ void beqz(){
 
 void fmv_s(){
     // copy fp reg2 in reg1 (could be merged with another instruction but it is not implemented here)
-    // TODO fetch reg1, reg2
+    cout << "SYS: fmv.s has been called" << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    float* reg2 = reinterpret_cast<float*>(fetchReg());
+    *reg1 = *reg2;
 }
 
 void sd(){
@@ -278,12 +282,23 @@ void ld(){
 
 void flt_s(){
     // reg1 = reg2 < reg3    (boolean result)
-    // TODO fetch reg1, reg2, reg3
+    cout << "SYS: flt.s has been called" << endl;
+    int64_t* reg1 = fetchReg();
+    double* reg2 = reinterpret_cast<double*>(fetchReg());
+    double* reg3 = reinterpret_cast<double*>(fetchReg());
+    *reg1 = 0;
+    if (*reg2 < *reg3)
+        *reg1 = 1;
 }
 
 void fld(){
     // load 64 bits from mem address and store to reg (fp)
     // TODO fetch reg1, reg2, offset
+    cout << "SYS: fld has been called" << endl;
+    double* reg1 = reinterpret_cast<double*>(fetchReg());
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reg1 = *reinterpret_cast<double*>(&buffer[*reg2 + offset]);
 }
 
 void la(){
@@ -296,13 +311,21 @@ void la(){
 
 void fsw(){
     // store 32 bit fp to memory address
-    // TODO fetch reg1, reg2, offset
+    cout << "SYS: fsw has been called " << endl;
+    float* reg1 = reinterpret_cast<float*>(fetchReg());
+    int16_t offset = fetchMemAddr();
+    int64_t* reg2 = fetchReg();
+    *reinterpret_cast<float*>(&buffer[*reg2 + offset]) = *reg1;
 }
 
 void slli(){
     // logical left shift on reg2 by amount held in immediate and store to reg1
     // immediate is an unsigned 6 bit value
     // TODO fetch reg1, reg2, imm
+    int64_t* reg1 = fetchReg();
+    int64_t* reg2 = fetchReg();
+    int8_t imm = fetch6bits();
+    *reg1 = *reg2 << imm;
 }
 
 void flw(){
@@ -450,6 +473,16 @@ int64_t* fetchReg(){
     return reg_map.find(opcode) -> second;
 }
 
+int8_t fetch6bits(){
+    int32_t immediate = 0;
+    for (int bits_cnt = 0; bits_cnt < 6; bits_cnt++){
+        immediate <<= 1;
+        immediate |= (buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1;
+        reg.pc++;
+    }
+    return immediate;
+}
+
 int32_t fetchImm(){
     int32_t immediate = 0;
     for (int bits_cnt = 0; bits_cnt < 32; bits_cnt++){
@@ -472,8 +505,8 @@ int16_t fetchMemAddr(){
 
 int main(){
     // I/O files
-    char executable_file[] = "test.o";
-    char stateIn[] = "blank_file.in";
+    char executable_file[] = "func_1";
+    char stateIn[] = "file.in";
     char stateOut[] = "file.out";
 
 
@@ -482,6 +515,11 @@ int main(){
     // load registers and memory in buffer
 
     ifstream stateFileIn(stateIn, ios::binary);
+
+    if (!stateFileIn.is_open()){
+        cout << "SYS: stateFileIn could not be oppened";
+        return 0;
+    }
 
     stateFileIn.read(reinterpret_cast<char*>(&reg), sizeof(reg));
 
@@ -497,6 +535,11 @@ int main(){
     // load entry point from binary file
 
     ifstream bin_exec(executable_file, ios::binary);
+
+    if (!bin_exec.is_open()){
+        cout << "SYS: binary executable could not be oppened";
+        return 0;
+    }
 
     int16_t entryPoint;
     bin_exec.read(reinterpret_cast<char*>(&entryPoint), sizeof(entryPoint));
@@ -516,10 +559,10 @@ int main(){
 
 
     // EXECUTE INSTRUCTIONS
-    //tests
-    for (int i = 0; i < 7; i++){
+
+    reg.ra = -1;
+    while (reg.pc != -1)
         fetchInstr()();
-    }
  
 
 
@@ -529,6 +572,11 @@ int main(){
     // file.out will contain registers and the stack
 
     ofstream stateFileOut(stateOut, ios::binary);
+
+    if (!stateFileOut.is_open()){
+        cout << "stateFileOut could not be oppened";
+        return 0;
+    }
 
     // write registers state
     stateFileOut.write(reinterpret_cast<char*>(&reg), sizeof(reg));
@@ -541,5 +589,4 @@ int main(){
     return 0;
 }
 
-// TODO check file opens
 // TODO conditional console SYS messages
