@@ -91,7 +91,6 @@ struct{
 }reg;
 
 // INSTRUCTION FUNCTIONS
-// all functions have the same signature even if not all parameters are used
 
 void addi(){
     // reg1 = reg2 + 32-bits immediate (sign extended to 64 bits)
