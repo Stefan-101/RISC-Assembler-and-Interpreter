@@ -580,11 +580,14 @@ int16_t fetchMemAddr(){
     return mem_addr;
 }
 
-int main(){
+int main(int argc, char* argv[]){
     // I/O files
-    char executable_file[] = "func_3";
-    char stateIn[] = "file.in";
-    char stateOut[] = "file.out";
+    char executable_file[100];
+    char stateIn[100];
+    char stateOut[100];
+    strcpy(executable_file,argv[1]);
+    strcpy(stateIn,argv[2]);
+    strcpy(stateOut,argv[3]);
 
 
 
