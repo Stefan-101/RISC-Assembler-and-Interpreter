@@ -410,7 +410,7 @@ void bgt(){
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
-    if (reg1 > reg2)
+    if (*reg1 > *reg2)
         reg.pc = int64_t(mem_addr);
 }
 
