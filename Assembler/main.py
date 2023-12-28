@@ -6,13 +6,13 @@
 #
 # Inputs are assumed to be correct (error checking is lacking)
 #
-# Running the script: python3.11 main.py <source_code> <objFiles> <output>
+# Run: python3.11 main.py <source_code> <objFiles> <output>
 #
 # = Structure of the output file = 
 #
 #   |-----------------------|
 #   |  variables/constants  |
-#   |   declared in data    |
+#   |   declared in data    | <- starts at a bit address multiple of 8
 #   |       section         |
 #   |-----------------------|
 #   | machine code computed |
@@ -22,6 +22,7 @@
 #   |   linked obj files    |
 #   |-----------------------|
 #   |    entry_point_addr   | <- start of the binary output file
+#   |          2B           | 
 #   |-----------------------|
 
 import sys
