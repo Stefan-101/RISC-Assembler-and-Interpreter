@@ -177,11 +177,15 @@ void lb(){
 }
 
 void call(){
-    // stores current pc and jumps to memory address
+    // stores current pc and jumps to memory address (or executes a predefined function)
     uint16_t mem_addr = uint16_t(fetchMemAddr());
     char *start,*end;
+    char scanf_buffer[1000];
+    int i = 0;
+    int scanf_buffer_index = 0;
     vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
     switch (mem_addr){
+        // printf and scanf are simulated since we do not know during compilation how many args will be passed
         case 65535:
             cout << "SYS: branch printf was executed " << endl;
             // simulate printf function (only supports 7 args, stack reading not implemented here)
@@ -206,8 +210,33 @@ void call(){
             break;
         case 65534:
             cout << "SYS: branch scanf was executed " << endl;
-            scanf(&buffer[reg.a0], &buffer[reg.a1], &buffer[reg.a2], &buffer[reg.a3], &buffer[reg.a4], &buffer[reg.a5]);
-            // TODO fix scanf call
+            // simulate scanf function (only supports 7 args, stack reading not implemented here)
+            cin.getline(scanf_buffer,1000);
+            while (scanf_buffer[scanf_buffer_index] != '\0' && buffer[reg.a0 + i] != '\0'){
+                if (buffer[reg.a0 + i] == '%' && buffer[reg.a0 + i + 1] == 'd'){
+                    //copy integer to mem address
+                    *reinterpret_cast<int64_t*>(&buffer[*regs.front()]) = int64_t(atoi(&scanf_buffer[scanf_buffer_index]));
+                    regs.erase(regs.begin());
+                    while (scanf_buffer[scanf_buffer_index] >= '0' && scanf_buffer[scanf_buffer_index] <= '9')
+                        scanf_buffer_index++;
+                    i += 2;
+                }
+                else if (buffer[reg.a0 + i] == '%' && buffer[reg.a0 + i + 1] == 's'){
+                    // copy string until first whitespace
+                    char *start_cpy = &buffer[*regs.front()];
+                    int cpy_index = 0;
+                    while (!strchr("\n    ", scanf_buffer[scanf_buffer_index]))
+                        start_cpy[cpy_index++] = scanf_buffer[scanf_buffer_index++];
+                    
+                    regs.erase(regs.begin());
+                    i += 2;
+                }
+                else {
+                    i++;
+                    scanf_buffer_index++;
+                }
+            }
+
             break;
         case 65533:
             cout << "SYS: branch strlen was executed " << endl;
@@ -488,19 +517,10 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
     //tests
-    auto cinstr = fetchInstr();
-    while (cinstr != &ret){
-        cinstr();
-        cinstr = fetchInstr();
-    }
-    cout << &buffer[2000];
-    /*fetchInstr()();
-    fetchInstr()();
-    fetchInstr()();
-    for (int i = 0; i < 6; i++){
+    for (int i = 0; i < 7; i++){
         fetchInstr()();
     }
-    cout << reg.pc;*/
+ 
 
 
     // STORE STATE
