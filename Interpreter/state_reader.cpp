@@ -169,7 +169,7 @@ int main(int argc, char* argv[]){
     output << endl << "STACK" << endl;
 
     for (int i = reg.sp; i < 8192; i++){
-        output << i << ": 0x" << hex << int32_t(buffer[i]) << dec << " (" << int32_t(buffer[i]) << ") ";
+        output << i << ": 0x" << hex << int32_t(int8_t(buffer[i]) & 0xFF) << dec << " (" << int32_t(int8_t(buffer[i])) << ") ";
         if (buffer[i] < 128 && buffer[i] > -1){
             switch (buffer[i]){
                 case ' ':
