@@ -1,15 +1,18 @@
-.section .text
-.global stringcopy
-stringcopy:
-    # a0 = destination
-    # a1 = source
-1:
-    lb      t0, 0(a1)    # Load a char from the src
-    sb      t0, 0(a0)    # Store the value of the src
-    beqz    t0, 1f       # Check if it's 0
+.section .rodata
+enter_prompt: .asciz "Enter a, b, and c: "
+scan: .asciz "%s %s %d"
+result_out: .asciz "Result = %d\n"
 
-    addi    a0, a0, 1    # Advance destination one byte
-    addi    a1, a1, 1    # Advance source one byte
-    j       1b           # Go back to the start of the loop
-1:
-    ret                  # Return back via the return address
+.section .text
+.global main
+main:
+    addi    sp, sp, -32     # Allocate 32 bytes from the stack
+    sd      ra, 0(sp)       # Since we are making calls, we need the original ra
+
+    la a0,scan
+    addi a1,sp,8
+    addi a2,sp,16
+    addi a3,sp,24
+    call scanf
+    addi    sp, sp, 32       # Always deallocate the stack!
+    ret
