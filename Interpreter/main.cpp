@@ -562,14 +562,14 @@ int main(){
 
     // EXECUTE INSTRUCTIONS
 
-    reg.ra = -1;
+    // instructions will be fetched and executed until the .global function exits (equivalent to reg.pc == -1)
+    reg.ra = -1;    // set return address to exit code here or in stateFileIn
     while (reg.pc != -1)
         fetchInstr()();
  
 
 
     // STORE STATE
-    // output registers and memory from buffer
     // since our functions do not use variables (only constants) and there are no heap allocations,
     // file.out will contain registers and the stack
 
