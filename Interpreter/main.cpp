@@ -4,9 +4,11 @@
 // 
 // Implementation choices based on these specific input files (not all RISC-V functionalities are implemented)
 //
+// Error checking is lacking
+//
 // Compiled with: g++ version 13.1.0 optimization O2
 //
-// Error checking is lacking
+// Run: ./main.exe <executable_bin_file> <state.in> <state.out>
 
 #include <iostream>
 #include <fstream>
