@@ -3,7 +3,7 @@ pc: 0
 t0: 0
 t1: 0
 a0: 8132        // destination address
-sp: 8092
+sp: 8092        // some stack is allocated
 ft0: 0
 a1: 8092        // matrix address
 t3: 0

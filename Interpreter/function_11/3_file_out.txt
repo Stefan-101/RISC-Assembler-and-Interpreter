@@ -2,7 +2,7 @@ REGISTERS
 pc: -1
 t0: 6
 t1: 5
-a0: 6
+a0: 6               // returned value
 sp: 8092
 ft0: 0
 a1: 536

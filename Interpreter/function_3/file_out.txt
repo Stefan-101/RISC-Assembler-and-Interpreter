@@ -96,7 +96,7 @@ STACK
 8119: 0x0 (0) [NULL]
 8120: 0x0 (0) [NULL]
 8121: 0x0 (0) [NULL]
-8122: 0x43 (67) C
+8122: 0x43 (67) C           // 4 bytes were coppied here
 8123: 0x6f (111) o
 8124: 0x70 (112) p
 8125: 0x79 (121) y

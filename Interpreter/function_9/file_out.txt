@@ -2,7 +2,7 @@ REGISTERS
 pc: -1
 t0: 0
 t1: 0
-a0: 8092
+a0: 8092    
 sp: 7892
 ft0: 0
 a1: 8092
@@ -274,7 +274,7 @@ STACK
 8097: 0x0 (0) [NULL]
 8098: 0x0 (0) [NULL]
 8099: 0x0 (0) [NULL]
-8100: 0xd4 (-44) 
+8100: 0xd4 (-44)            // the element now points to the begining of the list
 8101: 0x1e (30) 
 8102: 0x0 (0) [NULL]
 8103: 0x0 (0) [NULL]

@@ -2,10 +2,10 @@ REGISTERS
 pc: 0
 t0: 0
 t1: 0
-a0: 8167
-sp: 8142
+a0: 8167    // destination address
+sp: 8142    // some stack is allocated
 ft0: 0
-a1: 8142
+a1: 8142    // source address
 t3: 0
 ft1: 0
 t2: 0

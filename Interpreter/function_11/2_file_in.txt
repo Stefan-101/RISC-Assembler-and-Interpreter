@@ -2,15 +2,15 @@ REGISTERS
 pc: 0
 t0: 0
 t1: 0
-a0: 8092
+a0: 8092        // address of array
 sp: 8092
 ft0: 0
-a1: 10000
+a1: 10000       // needle
 t3: 0
 ft1: 0
 t2: 0
 t4: 0
-a2: 20
+a2: 20          // array size
 fa0: 0
 t5: 0
 s1: 0
