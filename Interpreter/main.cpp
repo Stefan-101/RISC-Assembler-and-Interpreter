@@ -103,7 +103,7 @@ struct{
 
 void addi(){
     // reg1 = reg2 + 32-bit immediate (sign extended to 64 bits)
-    cout << "SYS: addi has been called" << endl;
+    // cout << "SYS: addi has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int64_t imm = int64_t(fetchImm());
@@ -112,7 +112,7 @@ void addi(){
 
 void add(){
     // reg1 = reg2 + reg3
-    cout << "SYS: add has been called" << endl;
+    // cout << "SYS: add has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
@@ -121,26 +121,26 @@ void add(){
 
 void j(){
     // sets program counter to the memory address
-    cout << "SYS: j has been called" << endl;
+    // cout << "SYS: j has been called" << endl;
     reg.pc = int64_t(fetchMemAddr());
 }
 
 void ret(){
     // sets program counter to the value stored in ra register
-    cout << "SYS: ret has been called" << endl;
+    // cout << "SYS: ret has been called" << endl;
     reg.pc = reg.ra;
 }
 
 void li(){
     // reg1 = 32-bit immediate (sign extended to 64 bits)
-    cout << "SYS: li has been called " << endl;
+    // cout << "SYS: li has been called " << endl;
     int64_t* reg1 = fetchReg();
     *reg1 = int64_t(fetchImm());
 }
 
 void bge(){
     // branch if reg1 >= reg2
-    cout << "SYS: bge has been called" << endl;
+    // cout << "SYS: bge has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
@@ -150,7 +150,7 @@ void bge(){
 
 void beqz(){
     // branch if reg == zero (could have been merged with beq but it is not implemented here)
-    cout << "SYS: beqz has been called" << endl;
+    // cout << "SYS: beqz has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
     if (*reg1 == 0){                            // *reg1 == reg.zero
@@ -161,7 +161,7 @@ void beqz(){
 
 void fmv_s(){
     // reg1 = reg2 (floats) (could be merged with another instruction but it is not implemented here)
-    cout << "SYS: fmv.s has been called" << endl;
+    // cout << "SYS: fmv.s has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2;
@@ -169,7 +169,7 @@ void fmv_s(){
 
 void sd(){
     // store 64 bits from reg to memory address
-    cout << "SYS: sd has been called " << endl;
+    // cout << "SYS: sd has been called " << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -179,7 +179,7 @@ void sd(){
 
 void lb(){
     // load 8 bits from mem address, sign extend the value and store to reg1
-    cout << "SYS: lb has been called" << endl;
+    // cout << "SYS: lb has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -187,6 +187,7 @@ void lb(){
 }
 
 void call(){
+    // cout << "SYS: call has been called" << endl;
     // stores current pc and jumps to memory address (or executes a predefined function)
     uint16_t mem_addr = uint16_t(fetchMemAddr());
 
@@ -200,7 +201,7 @@ void call(){
     switch (mem_addr){
         // printf and scanf are simulated since we do not know during compilation how many args will be passed
         case 65535:
-            cout << "SYS: branch printf was executed " << endl;
+            // cout << "SYS: branch printf was executed " << endl;
 
             // simulate printf function (only supports 7 args, stack reading not implemented here)
             start = &buffer[reg.a0];
@@ -223,7 +224,7 @@ void call(){
             cout << start;
             break;
         case 65534:
-            cout << "SYS: branch scanf was executed " << endl;
+            // cout << "SYS: branch scanf was executed " << endl;
 
             // simulate scanf function (only supports 7 args, stack reading not implemented here)
             cin.getline(scanf_buffer,1000);
@@ -254,11 +255,11 @@ void call(){
 
             break;
         case 65533:
-            cout << "SYS: branch strlen was executed " << endl;
+            // cout << "SYS: branch strlen was executed " << endl;
             reg.a0 = int64_t(strlen(&buffer[reg.a0]));
             break;
         default:
-            cout << "SYS: branch default was executed" << endl;
+            // cout << "SYS: branch default was executed" << endl;
             reg.ra = reg.pc;                    // save return address
             reg.pc = int64_t(mem_addr);         // jump to memory_address   
     }
@@ -266,7 +267,7 @@ void call(){
 
 void sb(){
     // store 8 bits from reg1 to mem
-    cout << "SYS: sb has been called " << endl;
+    // cout << "SYS: sb has been called " << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -284,7 +285,7 @@ void lw(){
 
 void ld(){
     // load 64 bits from mem address and store to reg1
-    cout << "SYS: ld has been called" << endl;
+    // cout << "SYS: ld has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -293,7 +294,7 @@ void ld(){
 
 void flt_s(){
     // reg1 = reg2 < reg3    (boolean result)
-    cout << "SYS: flt.s has been called" << endl;
+    // cout << "SYS: flt.s has been called" << endl;
     int64_t* reg1 = fetchReg();
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
@@ -304,7 +305,7 @@ void flt_s(){
 
 void fld(){
     // load 64 bits from mem address and store to reg (double)
-    cout << "SYS: fld has been called" << endl;
+    // cout << "SYS: fld has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -313,7 +314,7 @@ void fld(){
 
 void la(){
     // load address in register
-    cout << "SYS: la has been called" << endl;
+    // cout << "SYS: la has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
     *reg1 = int64_t(uint16_t(mem_addr)) / 8;    // transform bit address to byte address of variable in the buffer
@@ -323,7 +324,7 @@ void la(){
 
 void fsw(){
     // store reg1 to memory address (float)
-    cout << "SYS: fsw has been called " << endl;
+    // cout << "SYS: fsw has been called " << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -333,7 +334,7 @@ void fsw(){
 void slli(){
     // logical left shift: reg1 = reg2 << imm
     // immediate is an unsigned 6 bit value
-    cout << "SYS: slli has been called" << endl;
+    // cout << "SYS: slli has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
@@ -342,7 +343,7 @@ void slli(){
 
 void flw(){
     // load 32 bits from mem address and store to reg1 (float)
-    cout << "SYS: flw has been called" << endl;
+    // cout << "SYS: flw has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     int16_t offset = fetchMemAddr();
     int64_t* reg2 = fetchReg();
@@ -352,7 +353,7 @@ void flw(){
 void srai(){
     // reg1 = reg2 >> imm (arithmetic right shift)
     // immediate is an unsigned 6 bit value
-    cout << "SYS: srai has been called" << endl;
+    // cout << "SYS: srai has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
@@ -361,7 +362,7 @@ void srai(){
 
 void fmul_d(){
     // reg1 = reg2 * reg3  (double)
-    cout << "SYS: fmul.d has been called" << endl;
+    // cout << "SYS: fmul.d has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
@@ -370,7 +371,7 @@ void fmul_d(){
 
 void fsub_d(){
     // reg1 = reg2 - reg3  (double)
-    cout << "SYS: fsub.d has been called" << endl;
+    // cout << "SYS: fsub.d has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
@@ -379,7 +380,7 @@ void fsub_d(){
 
 void fsqrt_d(){
     // reg1 = sqrt(reg2)  (double)
-    cout << "SYS: fsqrt.d has been called" << endl;
+    // cout << "SYS: fsqrt.d has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     *reg1 = sqrt(*reg2);
@@ -387,7 +388,7 @@ void fsqrt_d(){
 
 void fadd_d(){
     // reg1 = reg2 + reg3  (double)
-    cout << "SYS: fadd.d has been called" << endl;
+    // cout << "SYS: fadd.d has been called" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
@@ -397,7 +398,7 @@ void fadd_d(){
 void fmv_s_x(){
     // reg1 = reg2 (move from integer register to float point register)  (float)
     // the integer register will be interpreted as a float
-    cout << "SYS: fmv.s.x has been called" << endl;
+    // cout << "SYS: fmv.s.x has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2;
@@ -405,7 +406,7 @@ void fmv_s_x(){
 
 void bgt(){
     // branch if reg1 > reg2
-    cout << "SYS: bgt has been called" << endl;
+    // cout << "SYS: bgt has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
@@ -415,7 +416,7 @@ void bgt(){
 
 void bnez(){
     // branch if reg != zero
-    cout << "SYS: bnez has been called" << endl;
+   //  cout << "SYS: bnez has been called" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetchMemAddr();
     if (*reg1 != 0){                            // *reg1 != reg.zero
@@ -426,7 +427,7 @@ void bnez(){
 
 void sub(){
     // reg1 = reg2 - reg3
-    cout << "SYS: sub has been called" << endl;
+    // cout << "SYS: sub has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
@@ -435,7 +436,7 @@ void sub(){
 
 void fadd_s(){
     // reg1 = reg2 + reg3  (float)
-    cout << "SYS: fadd.s has been called" << endl;
+    // cout << "SYS: fadd.s has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     float* reg3 = reinterpret_cast<float*>(fetchReg());
@@ -444,7 +445,7 @@ void fadd_s(){
 
 void fmul_s(){
     // reg1 = reg2 * reg3  (float)
-    cout << "SYS: fmul.s has been called" << endl;
+    // cout << "SYS: fmul.s has been called" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     float* reg3 = reinterpret_cast<float*>(fetchReg());
@@ -452,8 +453,8 @@ void fmul_s(){
 }
 
 void mul(){
-    cout << "SYS: mul has been called" << endl;
     // reg1 = reg2 * reg3
+    // cout << "SYS: mul has been called" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
@@ -568,7 +569,7 @@ int32_t fetchImm(){
     }
     return immediate;
 }
-
+// TODO rename?
 int16_t fetchMemAddr(){
     int16_t mem_addr = 0;
     for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
