@@ -4,6 +4,8 @@
 // 
 // Implementation choices based on these specific input files (not all RISC-V functionalities are implemented)
 //
+// Compiled with: g++ version 13.1.0 optimization O2
+//
 // Error checking is lacking
 
 #include <iostream>
@@ -28,7 +30,7 @@ void (*fetchInstr())();
 int64_t* fetchReg();
 int8_t fetch6bits();
 int32_t fetchImm();
-int16_t fetchMemAddr();
+int16_t fetch2bytes();
 
 // CPU REGISTERS
 struct{
@@ -122,7 +124,7 @@ void add(){
 void j(){
     // sets program counter to the memory address
     // cout << "SYS: j instruction executing" << endl;
-    reg.pc = int64_t(fetchMemAddr());
+    reg.pc = int64_t(fetch2bytes());
 }
 
 void ret(){
@@ -143,7 +145,7 @@ void bge(){
     // cout << "SYS: bge instruction executing" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
-    int16_t mem_addr = fetchMemAddr();
+    int16_t mem_addr = fetch2bytes();
     if (*reg1 >= *reg2)
         reg.pc = int64_t(mem_addr);
 }
@@ -152,9 +154,9 @@ void beqz(){
     // branch if reg == zero (could have been merged with beq but it is not implemented here)
     // cout << "SYS: beqz instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t mem_addr = fetchMemAddr();
+    int16_t mem_addr = fetch2bytes();
     if (*reg1 == 0){                            // *reg1 == reg.zero
-        cout << "SYS: BRANCH TRUE" << endl;
+        // cout << "SYS: BRANCH TRUE" << endl;
         reg.pc = int64_t(mem_addr);
     }
 }
@@ -171,7 +173,7 @@ void sd(){
     // store 64 bits from reg to memory address
     // cout << "SYS: sd has been called " << endl;
     int64_t* reg1 = fetchReg();
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reinterpret_cast<int64_t*>(&buffer[*reg2 + offset]) = *reg1;       // *reg2 + offset can be considered a virtual address
                                                                         // and &buffer[*reg2 + offset] its translation
@@ -181,7 +183,7 @@ void lb(){
     // load 8 bits from mem address, sign extend the value and store to reg1
     // cout << "SYS: lb instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = int64_t(*reinterpret_cast<int8_t*>(&buffer[*reg2 + offset]));
 }
@@ -189,7 +191,7 @@ void lb(){
 void call(){
     // cout << "SYS: call instruction executing" << endl;
     // stores current pc and jumps to memory address (or executes a predefined function)
-    uint16_t mem_addr = uint16_t(fetchMemAddr());
+    uint16_t mem_addr = uint16_t(fetch2bytes());
 
     // auxiliary variables for processing predefined functions
     char *start,*end;
@@ -269,16 +271,16 @@ void sb(){
     // store 8 bits from reg1 to mem
     // cout << "SYS: sb has been called " << endl;
     int64_t* reg1 = fetchReg();
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reinterpret_cast<int8_t*>(&buffer[*reg2 + offset]) = int8_t(*reg1 & 0xFF);
 }
 
 void lw(){
     // load 32 bits from mem address, sign extend the value and store to reg1
-    cout << "SYS: lw instruction executing" << endl;
+    // cout << "SYS: lw instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = int64_t(*reinterpret_cast<int32_t*>(&buffer[*reg2 + offset]));
 }
@@ -287,7 +289,7 @@ void ld(){
     // load 64 bits from mem address and store to reg1
     // cout << "SYS: ld instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<int64_t*>(&buffer[*reg2 + offset]);
 }
@@ -307,7 +309,7 @@ void fld(){
     // load 64 bits from mem address and store to reg (double)
     // cout << "SYS: fld instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<double*>(&buffer[*reg2 + offset]);
 }
@@ -316,7 +318,7 @@ void la(){
     // load address in register
     // cout << "SYS: la instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t mem_addr = fetchMemAddr();
+    int16_t mem_addr = fetch2bytes();
     *reg1 = int64_t(uint16_t(mem_addr)) / 8;    // transform bit address to byte address of variable in the buffer
                                                 // bit address needs to be alligned to a multiple of 8
                                                 // (good enough considering stack and globals are alligned)
@@ -326,7 +328,7 @@ void fsw(){
     // store reg1 to memory address (float)
     // cout << "SYS: fsw has been called " << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reinterpret_cast<float*>(&buffer[*reg2 + offset]) = *reg1;
 }
@@ -345,7 +347,7 @@ void flw(){
     // load 32 bits from mem address and store to reg1 (float)
     // cout << "SYS: flw instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
-    int16_t offset = fetchMemAddr();
+    int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<float*>(&buffer[*reg2 + offset]);
 }
@@ -409,7 +411,7 @@ void bgt(){
     // cout << "SYS: bgt instruction executing" << endl;
     int64_t* reg1 = fetchReg();
     int64_t* reg2 = fetchReg();
-    int16_t mem_addr = fetchMemAddr();
+    int16_t mem_addr = fetch2bytes();
     if (*reg1 > *reg2)
         reg.pc = int64_t(mem_addr);
 }
@@ -418,9 +420,9 @@ void bnez(){
     // branch if reg != zero
    //  cout << "SYS: bnez instruction executing" << endl;
     int64_t* reg1 = fetchReg();
-    int16_t mem_addr = fetchMemAddr();
+    int16_t mem_addr = fetch2bytes();
     if (*reg1 != 0){                            // *reg1 != reg.zero
-        cout << "SYS: BRANCH TRUE" << endl;
+        // cout << "SYS: BRANCH TRUE" << endl;
         reg.pc = int64_t(mem_addr);
     }
 }
@@ -569,15 +571,15 @@ int32_t fetchImm(){
     }
     return immediate;
 }
-// TODO rename?
-int16_t fetchMemAddr(){
-    int16_t mem_addr = 0;
+
+int16_t fetch2bytes(){
+    int16_t value = 0;
     for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
-        mem_addr <<= 1;
-        mem_addr |= (buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1;
+        value <<= 1;
+        value |= (buffer[reg.pc/8] >> (7 - reg.pc % 8)) & 1;
         reg.pc++;
     }
-    return mem_addr;
+    return value;
 }
 
 int main(int argc, char* argv[]){
