@@ -6,7 +6,7 @@
 //
 // Error checking is lacking
 //
-// Compiled with: g++ version 13.1.0 optimization O2
+// Compiled with: g++ version 13.1.0 ~ optimization O2
 //
 // Run: ./main.exe <executable_bin_file> <state.in> <state.out>
 
@@ -200,7 +200,7 @@ void call(){
     char scanf_buffer[1000];
     int i = 0;
     int scanf_buffer_index = 0;
-    vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};
+    vector<int64_t*> regs = {&reg.a1, &reg.a2, &reg.a3, &reg.a4, &reg.a5, &reg.a6, &reg.a7};  // parameters given to the functions
 
     switch (mem_addr){
         // printf and scanf are simulated since we do not know during compilation how many args will be passed
@@ -210,6 +210,8 @@ void call(){
             // simulate printf function (only supports 7 args, stack reading not implemented here)
             start = &buffer[reg.a0];
             end = strchr(&buffer[reg.a0], '%');
+
+            // print format string replacing %d and %s with their respective values
             while (end){
                 end[0] = '\0';
                 cout << start;
@@ -420,7 +422,7 @@ void bgt(){
 
 void bnez(){
     // branch if reg != zero
-   //  cout << "SYS: bnez instruction executing" << endl;
+    //  cout << "SYS: bnez instruction executing" << endl;
     int64_t* reg1 = fetchReg();
     int16_t mem_addr = fetch2bytes();
     if (*reg1 != 0){                            // *reg1 != reg.zero
@@ -533,7 +535,7 @@ unordered_map<string, int64_t*> reg_map = {
 
 // FETCH FUNCTIONS
 
-// fetch instruction
+// fetch instruction ~ returns a function pointer to the instruction decoded
 void (*fetchInstr())(){
     string opcode = "";
     while (opcode_map.find(opcode) == opcode_map.end()){
@@ -544,7 +546,7 @@ void (*fetchInstr())(){
     return opcode_map.find(opcode) -> second;
 }
 
-// fetch register
+// fetch register ~ returns a int64_t pointer to the register decoded
 int64_t* fetchReg(){
     string opcode = "";
     while (reg_map.find(opcode) == reg_map.end()){
@@ -554,6 +556,7 @@ int64_t* fetchReg(){
     return reg_map.find(opcode) -> second;
 }
 
+// fetch 6 bits
 int8_t fetch6bits(){
     int32_t immediate = 0;
     for (int bits_cnt = 0; bits_cnt < 6; bits_cnt++){
@@ -564,6 +567,7 @@ int8_t fetch6bits(){
     return immediate;
 }
 
+// fetch immediate (32 bits)
 int32_t fetchImm(){
     int32_t immediate = 0;
     for (int bits_cnt = 0; bits_cnt < 32; bits_cnt++){
@@ -574,6 +578,7 @@ int32_t fetchImm(){
     return immediate;
 }
 
+// fetch 2 bytes
 int16_t fetch2bytes(){
     int16_t value = 0;
     for (int bits_cnt = 0; bits_cnt < 16; bits_cnt++){
