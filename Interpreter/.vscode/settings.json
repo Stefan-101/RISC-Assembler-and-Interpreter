@@ -11,6 +11,8 @@
         "xhash": "cpp",
         "string": "cpp",
         "vector": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "chrono": "cpp",
+        "utility": "cpp"
     }
 }
