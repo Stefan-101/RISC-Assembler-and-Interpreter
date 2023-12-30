@@ -2,6 +2,7 @@
 Assembler and interpreter for RISC V architecture
 
 ### Assembler references  
+<pre>
 RISC-V instructions behaviour:  
   https://msyksphinz-self.github.io/riscv-isadoc/  
   https://marz.utk.edu/my-courses/cosc230/book/instructing-the-cpu/  
@@ -20,4 +21,5 @@ Implementing instruction behaviour:
   https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf  
 State machine:  
   https://cs.unibuc.ro/~crusu/asc/Arhitectura%20Sistemelor%20de%20Calcul%20(ASC)%20-%20Curs%200x05.pdf  (Slides 9-16)
+</pre>
 
