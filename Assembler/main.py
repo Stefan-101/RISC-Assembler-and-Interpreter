@@ -10,6 +10,8 @@
 #
 # = Structure of the output file = 
 #
+# Immediates/memory addresses are big endian (only entry_point_addr is little endian)
+#
 #   |-----------------------|
 #   |  variables/constants  |
 #   |   declared in data    | <- starts at a bit address multiple of 8
