@@ -66,7 +66,7 @@ tp: 0
 gp: 0
 
 STACK
-7892: 0x17 (23) 
+7892: 0x1 (1)              // first element of the list
 7893: 0x0 (0) [NULL]
 7894: 0x0 (0) [NULL]
 7895: 0x0 (0) [NULL]
@@ -74,15 +74,15 @@ STACK
 7897: 0x0 (0) [NULL]
 7898: 0x0 (0) [NULL]
 7899: 0x0 (0) [NULL]
-7900: 0x0 (0) [NULL]
-7901: 0x0 (0) [NULL]
+7900: 0xe4 (-28)            // pointer to the next element in the list
+7901: 0x1e (30) 
 7902: 0x0 (0) [NULL]
 7903: 0x0 (0) [NULL]
 7904: 0x0 (0) [NULL]
 7905: 0x0 (0) [NULL]
 7906: 0x0 (0) [NULL]
 7907: 0x0 (0) [NULL]
-7908: 0x0 (0) [NULL]
+7908: 0x2 (2)              // second element in the list
 7909: 0x0 (0) [NULL]
 7910: 0x0 (0) [NULL]
 7911: 0x0 (0) [NULL]
@@ -90,7 +90,7 @@ STACK
 7913: 0x0 (0) [NULL]
 7914: 0x0 (0) [NULL]
 7915: 0x0 (0) [NULL]
-7916: 0x0 (0) [NULL]
+7916: 0x0 (0) [NULL]        // pointer to the next element in the list (no other element)
 7917: 0x0 (0) [NULL]
 7918: 0x0 (0) [NULL]
 7919: 0x0 (0) [NULL]
@@ -130,8 +130,8 @@ STACK
 7953: 0x0 (0) [NULL]
 7954: 0x0 (0) [NULL]
 7955: 0x0 (0) [NULL]
-7956: 0x2e (46) .
-7957: 0x1f (31) 
+7956: 0x0 (0) [NULL]
+7957: 0x0 (0) [NULL]
 7958: 0x0 (0) [NULL]
 7959: 0x0 (0) [NULL]
 7960: 0x0 (0) [NULL]
@@ -156,7 +156,7 @@ STACK
 7979: 0x0 (0) [NULL]
 7980: 0x0 (0) [NULL]
 7981: 0x0 (0) [NULL]
-7982: 0x4 (4) 
+7982: 0x0 (0) [NULL]
 7983: 0x0 (0) [NULL]
 7984: 0x0 (0) [NULL]
 7985: 0x0 (0) [NULL]
@@ -266,7 +266,7 @@ STACK
 8089: 0x0 (0) [NULL]
 8090: 0x0 (0) [NULL]
 8091: 0x0 (0) [NULL]
-8092: 0x4 (4) 
+8092: 0x3 (3)              // element to be added
 8093: 0x0 (0) [NULL]
 8094: 0x0 (0) [NULL]
 8095: 0x0 (0) [NULL]
