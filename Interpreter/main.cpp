@@ -109,6 +109,7 @@ void addi(){
     // reg1 = reg2 + 32-bit immediate (sign extended to 64 bits)
     // cout << "SYS: addi instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int64_t imm = int64_t(fetchImm());
     *reg1 = *reg2 + imm;
@@ -118,6 +119,7 @@ void add(){
     // reg1 = reg2 + reg3
     // cout << "SYS: add instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
     *reg1 = *reg2 + *reg3;
@@ -139,6 +141,7 @@ void li(){
     // reg1 = 32-bit immediate (sign extended to 64 bits)
     // cout << "SYS: li has been called " << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     *reg1 = int64_t(fetchImm());
 }
 
@@ -167,6 +170,7 @@ void fmv_s(){
     // reg1 = reg2 (floats) (could be merged with another instruction but it is not implemented here)
     // cout << "SYS: fmv.s instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2;
 }
@@ -185,6 +189,7 @@ void lb(){
     // load 8 bits from mem address, sign extend the value and store to reg1
     // cout << "SYS: lb instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = int64_t(*reinterpret_cast<int8_t*>(&buffer[*reg2 + offset]));
@@ -284,6 +289,7 @@ void lw(){
     // load 32 bits from mem address, sign extend the value and store to reg1
     // cout << "SYS: lw instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = int64_t(*reinterpret_cast<int32_t*>(&buffer[*reg2 + offset]));
@@ -293,6 +299,7 @@ void ld(){
     // load 64 bits from mem address and store to reg1
     // cout << "SYS: ld instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<int64_t*>(&buffer[*reg2 + offset]);
@@ -302,6 +309,7 @@ void flt_s(){
     // reg1 = reg2 < reg3    (boolean result)
     // cout << "SYS: flt.s instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
     *reg1 = 0;
@@ -313,6 +321,7 @@ void fld(){
     // load 64 bits from mem address and store to reg (double)
     // cout << "SYS: fld instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<double*>(&buffer[*reg2 + offset]);
@@ -322,6 +331,7 @@ void la(){
     // load address in register
     // cout << "SYS: la instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t mem_addr = fetch2bytes();
     *reg1 = int64_t(uint16_t(mem_addr)) / 8;    // transform bit address to byte address of variable in the buffer
                                                 // bit address needs to be alligned to a multiple of 8
@@ -342,6 +352,7 @@ void slli(){
     // immediate is an unsigned 6 bit value
     // cout << "SYS: slli instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
     *reg1 = *reg2 << imm;
@@ -351,6 +362,7 @@ void flw(){
     // load 32 bits from mem address and store to reg1 (float)
     // cout << "SYS: flw instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int16_t offset = fetch2bytes();
     int64_t* reg2 = fetchReg();
     *reg1 = *reinterpret_cast<float*>(&buffer[*reg2 + offset]);
@@ -361,6 +373,7 @@ void srai(){
     // immediate is an unsigned 6 bit value
     // cout << "SYS: srai instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int8_t imm = fetch6bits();
     *reg1 = *reg2 >> imm;
@@ -370,6 +383,7 @@ void fmul_d(){
     // reg1 = reg2 * reg3  (double)
     // cout << "SYS: fmul.d instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
     *reg1 = *reg2 * *reg3;
@@ -379,6 +393,7 @@ void fsub_d(){
     // reg1 = reg2 - reg3  (double)
     // cout << "SYS: fsub.d instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
     *reg1 = *reg2 - *reg3;
@@ -388,6 +403,7 @@ void fsqrt_d(){
     // reg1 = sqrt(reg2)  (double)
     // cout << "SYS: fsqrt.d instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     *reg1 = sqrt(*reg2);
 }
@@ -396,6 +412,7 @@ void fadd_d(){
     // reg1 = reg2 + reg3  (double)
     // cout << "SYS: fadd.d instruction executing" << endl;
     double* reg1 = reinterpret_cast<double*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     double* reg2 = reinterpret_cast<double*>(fetchReg());
     double* reg3 = reinterpret_cast<double*>(fetchReg());
     *reg1 = *reg2 + *reg3;
@@ -406,6 +423,7 @@ void fmv_s_x(){
     // the integer register will be interpreted as a float
     // cout << "SYS: fmv.s.x instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2;
 }
@@ -435,6 +453,7 @@ void sub(){
     // reg1 = reg2 - reg3
     // cout << "SYS: sub instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
     *reg1 = *reg2 - *reg3;
@@ -444,6 +463,7 @@ void fadd_s(){
     // reg1 = reg2 + reg3  (float)
     // cout << "SYS: fadd.s instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     float* reg3 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2 + *reg3;
@@ -453,6 +473,7 @@ void fmul_s(){
     // reg1 = reg2 * reg3  (float)
     // cout << "SYS: fmul.s instruction executing" << endl;
     float* reg1 = reinterpret_cast<float*>(fetchReg());
+    if (reinterpret_cast<int64_t*>(reg1) == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     float* reg2 = reinterpret_cast<float*>(fetchReg());
     float* reg3 = reinterpret_cast<float*>(fetchReg());
     *reg1 = *reg2 * *reg3;
@@ -462,6 +483,7 @@ void mul(){
     // reg1 = reg2 * reg3
     // cout << "SYS: mul instruction executing" << endl;
     int64_t* reg1 = fetchReg();
+    if (reg1 == &reg.zero) cout << "SYS: Register zero can not be modified!\nExecution stopped.", exit(0);
     int64_t* reg2 = fetchReg();
     int64_t* reg3 = fetchReg();
     *reg1 = *reg2 * *reg3;
