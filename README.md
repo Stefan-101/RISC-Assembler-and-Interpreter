@@ -11,6 +11,8 @@ https://www.youtube.com/watch?v=wjHlvQfo5uI (our assembler has variable length i
 https://www.youtube.com/watch?v=5ImTvOyvH2w    
 
 ### Interpreter references  
+**__Function pointers__**:  
+https://manderc.com/types/functionpointertype/index_eng.php
 **__Lookup tables__**:  
 https://stackoverflow.com/questions/51624933/how-exactly-do-lookup-tables-work-and-how-to-implement-them  
 https://en.cppreference.com/w/cpp/container/unordered_map  
